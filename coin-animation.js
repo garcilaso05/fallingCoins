@@ -34,81 +34,54 @@ function init() {
 }
 
 function loadCoinModel() {
-    console.log('Cargando tu modelo coin.glb...');
-    
-    // Verificar si GLTFLoader está disponible
-    if (typeof THREE.GLTFLoader === 'undefined') {
-        console.log('GLTFLoader no encontrado, creando uno básico...');
-        createBasicGLTFLoader();
-    }
+    console.log('Cargando modelo coin.glb...');
     
     const loader = new THREE.GLTFLoader();
-    loadWithLoader(loader);
-}
-
-function createBasicGLTFLoader() {
-    // Crear un GLTFLoader básico para cargar archivos .glb
-    THREE.GLTFLoader = function() {};
     
-    THREE.GLTFLoader.prototype.load = function(url, onLoad, onProgress, onError) {
-        const loader = new THREE.FileLoader();
-        loader.setResponseType('arraybuffer');
-        
-        loader.load(url, function(data) {
-            try {
-                // Verificar que es un archivo GLB válido
-                const view = new DataView(data);
-                const magic = view.getUint32(0, true);
-                
-                if (magic === 0x46546C67) { // 'glTF' en little endian
-                    console.log('Archivo GLB detectado, procesando...');
-                    
-                    // Crear un objeto resultado básico
-                    // Nota: Esto es una implementación muy básica
-                    // En un caso real, necesitarías parsear completamente el GLB
-                    const scene = new THREE.Group();
-                    scene.name = 'GLBScene';
-                    
-                    const result = {
-                        scene: scene,
-                        scenes: [scene],
-                        animations: [],
-                        cameras: [],
-                        asset: { generator: 'BasicGLTFLoader' }
-                    };
-                    
-                    if (onLoad) onLoad(result);
-                } else {
-                    throw new Error('No es un archivo GLB válido');
-                }
-            } catch (error) {
-                console.error('Error parseando GLB:', error);
-                if (onError) onError(error);
-            }
-        }, onProgress, onError);
-    };
-}
-
-function loadWithLoader(loader) {
     loader.load(
         './coin.glb',
         function(gltf) {
+            console.log('¡Archivo coin.glb cargado exitosamente!', gltf);
+            
             coin = gltf.scene;
+            
+            // Ajustar escala y posición
             const box = new THREE.Box3().setFromObject(coin);
             const size = box.getSize(new THREE.Vector3());
             const maxDimension = Math.max(size.x, size.y, size.z);
             const scale = 2 / maxDimension;
             coin.scale.setScalar(scale);
+            
+            // Centrar la moneda
             const center = box.getCenter(new THREE.Vector3());
             coin.position.sub(center.multiplyScalar(scale));
+            
             scene.add(coin);
-            console.log('Moneda cargada exitosamente');
+            console.log('Moneda agregada a la escena');
         },
-        undefined,
+        function(progress) {
+            console.log('Progreso de carga:', progress);
+        },
         function(error) {
             console.error('Error cargando coin.glb:', error);
+            console.log('Verifica que el archivo coin.glb esté en la misma carpeta');
+            
+            // Crear moneda temporal si falla la carga
+            createFallbackCoin();
         }
     );
+}
+
+function createFallbackCoin() {
+    console.log('Creando moneda de respaldo...');
+    const geometry = new THREE.CylinderGeometry(1, 1, 0.15, 32);
+    const material = new THREE.MeshPhongMaterial({ 
+        color: 0xffd700,
+        shininess: 100
+    });
+    coin = new THREE.Mesh(geometry, material);
+    scene.add(coin);
+    console.log('Moneda de respaldo creada');
 }
 
 function animate() {

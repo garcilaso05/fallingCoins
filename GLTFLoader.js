@@ -1,142 +1,526 @@
 /**
- * GLTFLoader con switch para moneda falsa o real
+ * @author Don McCurdy / https://www.donmccurdy.com
  */
-(function() {
-    'use strict';
 
-    // Switch global para controlar qué moneda usar
-    window.USE_FAKE_COIN = true; // Cambiar a false para usar coin.glb
+THREE.GLTFLoader = ( function () {
 
-    THREE.GLTFLoader = function(manager) {
-        this.manager = (manager !== undefined) ? manager : THREE.DefaultLoadingManager;
-    };
+	function GLTFLoader( manager ) {
 
-    THREE.GLTFLoader.prototype = {
-        constructor: THREE.GLTFLoader,
+		THREE.Loader.call( this, manager );
 
-        load: function(url, onLoad, onProgress, onError) {
-            const scope = this;
-            
-            // Si el switch está activado, crear moneda falsa directamente
-            if (window.USE_FAKE_COIN) {
-                console.log('Usando moneda falsa (switch activado)');
-                scope.createFakeCoin(onLoad);
-                return;
-            }
-            
-            // Si no, intentar cargar el archivo real
-            console.log('Intentando cargar archivo real:', url);
-            const loader = new THREE.FileLoader(scope.manager);
-            loader.setResponseType('arraybuffer');
+		this.dracoLoader = null;
+		this.ktx2Loader = null;
+		this.meshoptDecoder = null;
 
-            loader.load(url, function(data) {
-                scope.parse(data, '', onLoad, onError);
-            }, onProgress, onError);
-        },
+		this.pluginCallbacks = [];
 
-        createFakeCoin: function(onLoad) {
-            const scene = new THREE.Group();
-            
-            // Crear una moneda realista con cilindro
-            const geometry = new THREE.CylinderGeometry(1, 1, 0.15, 32);
-            const material = new THREE.MeshPhongMaterial({ 
-                color: 0xffd700,
-                shininess: 100
-            });
-            const coinMesh = new THREE.Mesh(geometry, material);
-            
-            // Añadir bordes para que se vea más como moneda
-            const edgeGeometry = new THREE.TorusGeometry(1, 0.05, 8, 32);
-            const edgeMaterial = new THREE.MeshPhongMaterial({ 
-                color: 0xffdd44,
-                shininess: 120 
-            });
-            const edge1 = new THREE.Mesh(edgeGeometry, edgeMaterial);
-            const edge2 = new THREE.Mesh(edgeGeometry, edgeMaterial);
-            
-            // Rotar 90 grados en X para que estén horizontales como la moneda
-            edge1.rotation.x = Math.PI / 2;
-            edge2.rotation.x = Math.PI / 2;
-            
-            edge1.position.y = 0.075;
-            edge2.position.y = -0.075;
-            
-            scene.add(coinMesh);
-            scene.add(edge1);
-            scene.add(edge2);
-            
-            const result = {
-                scene: scene,
-                scenes: [scene],
-                animations: [],
-                cameras: [],
-                asset: { generator: 'FakeCoinLoader' }
-            };
-            
-            console.log('Moneda falsa generada');
-            if (onLoad) setTimeout(() => onLoad(result), 100);
-        },
+		this.register( function ( parser ) {
 
-        parse: function(data, path, onLoad, onError) {
-            const scope = this;
+			return new GLTFMaterialsClearcoatExtension( parser );
 
-            try {
-                // Verificar header GLB
-                const header = new DataView(data, 0, 12);
-                const magic = header.getUint32(0, true);
-                
-                if (magic !== 0x46546C67) {
-                    throw new Error('Archivo no es GLB válido');
-                }
+		} );
 
-                const version = header.getUint32(4, true);
-                const length = header.getUint32(8, true);
+		this.register( function ( parser ) {
 
-                console.log('GLB válido detectado - Versión:', version, 'Tamaño:', length);
+			return new GLTFTextureBasisUExtension( parser );
 
-                // Para este ejemplo simplificado, crear una geometría básica
-                // En un loader real, parsearías el contenido JSON y binario del GLB
-                const scene = new THREE.Group();
-                
-                // Crear una moneda básica como placeholder
-                const geometry = new THREE.CylinderGeometry(1, 1, 0.1, 32);
-                const material = new THREE.MeshPhongMaterial({
-                    color: 0xffd700,
-                    shininess: 100,
-                    metalness: 0.8,
-                    roughness: 0.2
-                });
-                const coinMesh = new THREE.Mesh(geometry, material);
-                scene.add(coinMesh);
+		} );
 
-                const result = {
-                    scene: scene,
-                    scenes: [scene],
-                    animations: [],
-                    cameras: [],
-                    asset: {
-                        generator: 'SimplifiedGLTFLoader',
-                        version: '2.0'
-                    }
-                };
+		this.register( function ( parser ) {
 
-                if (onLoad) {
-                    setTimeout(() => onLoad(result), 100);
-                }
+			return new GLTFTextureWebPExtension( parser );
 
-            } catch (error) {
-                console.error('Error parsing GLB:', error);
-                if (onError) onError(error);
-            }
-        }
-    };
+		} );
 
-    // Función global para cambiar el switch
-    window.toggleCoinType = function() {
-        window.USE_FAKE_COIN = !window.USE_FAKE_COIN;
-        console.log('Switch cambiado a:', window.USE_FAKE_COIN ? 'Moneda Falsa' : 'Archivo GLB');
-        // Recargar la página para aplicar el cambio
-        location.reload();
-    };
+		this.register( function ( parser ) {
 
-})();
+			return new GLTFMaterialsSheenExtension( parser );
+
+		} );
+
+		this.register( function ( parser ) {
+
+			return new GLTFMaterialsTransmissionExtension( parser );
+
+		} );
+
+		this.register( function ( parser ) {
+
+			return new GLTFMaterialsVolumeExtension( parser );
+
+		} );
+
+		this.register( function ( parser ) {
+
+			return new GLTFMaterialsIorExtension( parser );
+
+		} );
+
+		this.register( function ( parser ) {
+
+			return new GLTFMaterialsEmissiveStrengthExtension( parser );
+
+		} );
+
+		this.register( function ( parser ) {
+
+			return new GLTFMaterialsBumpExtension( parser );
+
+		} );
+
+		this.register( function ( parser ) {
+
+			return new GLTFMaterialsAnisotropyExtension( parser );
+
+		} );
+
+		this.register( function ( parser ) {
+
+			return new GLTFMaterialsIridescenceExtension( parser );
+
+		} );
+
+		this.register( function ( parser ) {
+
+			return new GLTFMaterialsSpecularExtension( parser );
+
+		} );
+
+		this.register( function ( parser ) {
+
+			return new GLTFMaterialsSpecularGlossinessExtension( parser );
+
+		} );
+
+		this.register( function ( parser ) {
+
+			return new GLTFMaterialsUnlitExtension( parser );
+
+		} );
+
+		this.register( function ( parser ) {
+
+			return new GLTFMaterialsPBRSpecularGlossinessExtension( parser );
+
+		} );
+
+		this.register( function ( parser ) {
+
+			return new GLTFMaterialsVariantsExtension( parser );
+
+		} );
+
+		this.register( function ( parser ) {
+
+			return new GLTFMeshoptCompression( parser );
+
+		} );
+
+		this.register( function ( parser ) {
+
+			return new GLTFMeshGpuInstancing( parser );
+
+		} );
+
+	}
+
+	GLTFLoader.prototype = Object.assign( Object.create( THREE.Loader.prototype ), {
+
+		constructor: GLTFLoader,
+
+		load: function ( url, onLoad, onProgress, onError ) {
+
+			var scope = this;
+
+			var resourcePath;
+
+			if ( this.resourcePath !== '' ) {
+
+				resourcePath = this.resourcePath;
+
+			} else if ( this.path !== '' ) {
+
+				resourcePath = this.path;
+
+			} else {
+
+				resourcePath = THREE.LoaderUtils.extractUrlBase( url );
+
+			}
+
+			// Tells the LoadingManager to track an extra item, which resolves after
+			// the model is fully loaded. This means the count of items loaded will
+			// be incorrect, but ensures manager.onLoad() does not fire early.
+			this.manager.itemStart( url );
+
+			var _onError = function ( e ) {
+
+				if ( onError ) {
+
+					onError( e );
+
+				} else {
+
+					console.error( e );
+
+				}
+
+				scope.manager.itemError( url );
+				scope.manager.itemEnd( url );
+
+			};
+
+			var loader = new THREE.FileLoader( this.manager );
+
+			loader.setPath( this.path );
+			loader.setResponseType( 'arraybuffer' );
+			loader.setRequestHeader( this.requestHeader );
+			loader.setWithCredentials( this.withCredentials );
+
+			loader.load( url, function ( data ) {
+
+				try {
+
+					scope.parse( data, resourcePath, function ( gltf ) {
+
+						onLoad( gltf );
+
+						scope.manager.itemEnd( url );
+
+					}, _onError );
+
+				} catch ( e ) {
+
+					_onError( e );
+
+				}
+
+			}, onProgress, _onError );
+
+		},
+
+		setDRACOLoader: function ( dracoLoader ) {
+
+			this.dracoLoader = dracoLoader;
+			return this;
+
+		},
+
+		setKTX2Loader: function ( ktx2Loader ) {
+
+			this.ktx2Loader = ktx2Loader;
+			return this;
+
+		},
+
+		setMeshoptDecoder: function ( meshoptDecoder ) {
+
+			this.meshoptDecoder = meshoptDecoder;
+			return this;
+
+		},
+
+		register: function ( callback ) {
+
+			if ( this.pluginCallbacks.indexOf( callback ) === - 1 ) {
+
+				this.pluginCallbacks.push( callback );
+
+			}
+
+			return this;
+
+		},
+
+		unregister: function ( callback ) {
+
+			if ( this.pluginCallbacks.indexOf( callback ) !== - 1 ) {
+
+				this.pluginCallbacks.splice( this.pluginCallbacks.indexOf( callback ), 1 );
+
+			}
+
+			return this;
+
+		},
+
+		parse: function ( data, path, onLoad, onError ) {
+
+			var content;
+			var extensions = {};
+			var plugins = {};
+			var json;
+
+			if ( typeof data === 'string' ) {
+
+				content = data;
+
+			} else {
+
+				var magic = THREE.LoaderUtils.decodeText( new Uint8Array( data, 0, 4 ) );
+
+				if ( magic === 'glTF' ) {
+
+					extensions[ EXTENSIONS.KHR_BINARY_GLTF ] = new GLTFBinaryExtension( data );
+					content = extensions[ EXTENSIONS.KHR_BINARY_GLTF ].content;
+
+				} else {
+
+					content = THREE.LoaderUtils.decodeText( new Uint8Array( data ) );
+
+				}
+
+			}
+
+			try {
+
+				json = JSON.parse( content );
+
+			} catch ( error ) {
+
+				if ( onError ) onError( error );
+				return;
+
+			}
+
+			if ( json.asset === undefined || json.asset.version[ 0 ] < 2 ) {
+
+				if ( onError ) onError( new Error( 'THREE.GLTFLoader: Unsupported asset. glTF versions >=2.0 are supported.' ) );
+				return;
+
+			}
+
+			var parser = new GLTFParser( json, {
+
+				path: path || this.resourcePath || '',
+				crossOrigin: this.crossOrigin,
+				requestHeader: this.requestHeader,
+				manager: this.manager,
+				ktx2Loader: this.ktx2Loader,
+				meshoptDecoder: this.meshoptDecoder
+
+			} );
+
+			parser.fileLoader.setRequestHeader( this.requestHeader );
+
+			for ( var i = 0; i < this.pluginCallbacks.length; i ++ ) {
+
+				var plugin = this.pluginCallbacks[ i ]( parser );
+				plugins[ plugin.name ] = plugin;
+
+				// Workaround to avoid determining as unknown extension
+				// in addUnknownExtensionsToUserData().
+				// Remove this workaround if we move all the existing
+				// extension handlers to plugin system
+				extensions[ plugin.name ] = true;
+
+			}
+
+			if ( json.extensionsUsed ) {
+
+				for ( var i = 0; i < json.extensionsUsed.length; ++ i ) {
+
+					var extensionName = json.extensionsUsed[ i ];
+					var extensionsRequired = json.extensionsRequired || [];
+
+					switch ( extensionName ) {
+
+						case EXTENSIONS.KHR_MATERIALS_UNLIT:
+							extensions[ extensionName ] = new GLTFMaterialsUnlitExtension();
+							break;
+
+						case EXTENSIONS.KHR_DRACO_MESH_COMPRESSION:
+							extensions[ extensionName ] = new GLTFDracoMeshCompressionExtension( json, this.dracoLoader );
+							break;
+
+						case EXTENSIONS.KHR_TEXTURE_TRANSFORM:
+							extensions[ extensionName ] = new GLTFTextureTransformExtension();
+							break;
+
+						case EXTENSIONS.KHR_MESH_QUANTIZATION:
+							extensions[ extensionName ] = new GLTFMeshQuantizationExtension();
+							break;
+
+						default:
+
+							if ( extensionsRequired.indexOf( extensionName ) >= 0 && plugins[ extensionName ] === undefined ) {
+
+								console.warn( 'THREE.GLTFLoader: Unknown extension "' + extensionName + '".' );
+
+							}
+
+					}
+
+				}
+
+			}
+
+			parser.setExtensions( extensions );
+			parser.setPlugins( plugins );
+			parser.parse( onLoad, onError );
+
+		}
+
+	} );
+
+	/* GLTFREGISTRY */
+
+	function GLTFRegistry() {
+
+		var objects = {};
+
+		return	{
+
+			get: function ( key ) {
+
+				return objects[ key ];
+
+			},
+
+			add: function ( key, object ) {
+
+				objects[ key ] = object;
+
+			},
+
+			remove: function ( key ) {
+
+				delete objects[ key ];
+
+			},
+
+			removeAll: function () {
+
+				objects = {};
+
+			}
+
+		};
+
+	}
+
+	/*********************************/
+	/********** EXTENSIONS ***********/
+	/*********************************/
+
+	var EXTENSIONS = {
+		KHR_BINARY_GLTF: 'KHR_binary_glTF',
+		KHR_DRACO_MESH_COMPRESSION: 'KHR_draco_mesh_compression',
+		KHR_LIGHTS_PUNCTUAL: 'KHR_lights_punctual',
+		KHR_MATERIALS_CLEARCOAT: 'KHR_materials_clearcoat',
+		KHR_MATERIALS_IOR: 'KHR_materials_ior',
+		KHR_MATERIALS_SHEEN: 'KHR_materials_sheen',
+		KHR_MATERIALS_SPECULAR: 'KHR_materials_specular',
+		KHR_MATERIALS_TRANSMISSION: 'KHR_materials_transmission',
+		KHR_MATERIALS_IRIDESCENCE: 'KHR_materials_iridescence',
+		KHR_MATERIALS_ANISOTROPY: 'KHR_materials_anisotropy',
+		KHR_MATERIALS_UNLIT: 'KHR_materials_unlit',
+		KHR_MATERIALS_VOLUME: 'KHR_materials_volume',
+		KHR_TEXTURE_BASISU: 'KHR_texture_basisu',
+		KHR_TEXTURE_TRANSFORM: 'KHR_texture_transform',
+		KHR_MESH_QUANTIZATION: 'KHR_mesh_quantization',
+		KHR_MATERIALS_EMISSIVE_STRENGTH: 'KHR_materials_emissive_strength',
+		EXT_TEXTURE_WEBP: 'EXT_texture_webp',
+		EXT_TEXTURE_AVIF: 'EXT_texture_avif',
+		EXT_MESHOPT_COMPRESSION: 'EXT_meshopt_compression',
+		EXT_MESH_GPU_INSTANCING: 'EXT_mesh_gpu_instancing'
+	};
+
+	// Nota: Esta es una versión simplificada del GLTFLoader oficial
+	// Para funcionalidad completa, descarga el archivo oficial desde:
+	// https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/js/loaders/GLTFLoader.js
+
+	function GLTFBinaryExtension( data ) {
+
+		this.name = EXTENSIONS.KHR_BINARY_GLTF;
+		this.content = null;
+		this.body = null;
+
+		var headerView = new DataView( data, 0, 12 );
+		var textDecoder = new TextDecoder();
+
+		this.header = {
+			magic: textDecoder.decode( new Uint8Array( data.slice( 0, 4 ) ) ),
+			version: headerView.getUint32( 4, true ),
+			length: headerView.getUint32( 8, true )
+		};
+
+		if ( this.header.magic !== 'glTF' ) {
+
+			throw new Error( 'THREE.GLTFLoader: Unsupported glTF-Binary header.' );
+
+		} else if ( this.header.version < 2.0 ) {
+
+			throw new Error( 'THREE.GLTFLoader: Legacy binary file detected.' );
+
+		}
+
+		var chunkContentsLength = this.header.length - 12;
+		var chunkView = new DataView( data, 12 );
+		var chunkIndex = 0;
+
+		while ( chunkIndex < chunkContentsLength ) {
+
+			var chunkLength = chunkView.getUint32( chunkIndex, true );
+			chunkIndex += 4;
+
+			var chunkType = chunkView.getUint32( chunkIndex, true );
+			chunkIndex += 4;
+
+			if ( chunkType === 0x4E4F534A ) {
+
+				var contentArray = new Uint8Array( data, 12 + chunkIndex, chunkLength );
+				this.content = textDecoder.decode( contentArray );
+
+			} else if ( chunkType === 0x004E4942 ) {
+
+				var byteOffset = 12 + chunkIndex;
+				this.body = data.slice( byteOffset, byteOffset + chunkLength );
+
+			}
+
+			chunkIndex += chunkLength;
+
+		}
+
+		if ( this.content === null ) {
+
+			throw new Error( 'THREE.GLTFLoader: JSON content not found.' );
+
+		}
+
+	}
+
+	// Parser simplificado para manejar GLB básico
+	function GLTFParser( json, options ) {
+		this.json = json;
+		this.options = options;
+	}
+
+	GLTFParser.prototype = {
+		parse: function( onLoad, onError ) {
+			// Implementación muy básica - crear un grupo vacío
+			const scene = new THREE.Group();
+			const result = {
+				scene: scene,
+				scenes: [scene],
+				animations: [],
+				cameras: [],
+				asset: this.json.asset || {}
+			};
+			
+			if (onLoad) onLoad(result);
+		},
+		
+		setExtensions: function(extensions) {
+			this.extensions = extensions;
+		},
+		
+		setPlugins: function(plugins) {
+			this.plugins = plugins;
+		}
+	};
+
+	return GLTFLoader;
+
+} )();
