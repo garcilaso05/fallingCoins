@@ -172,13 +172,27 @@ function getCurrentCoinAndRotation(scrollTop) {
             // CAMBIO SOLO AL FINAL DEL RANGO: cuando llegamos al subtítulo (endPixel)
             const distanceToSubtitle = Math.abs(scrollTop - range.endPixel);
             const isAtSubtitle = distanceToSubtitle < 5; // Muy cerca del subtítulo (5px)
-            const isAt180Degrees = Math.abs(currentAngle - Math.PI) < 0.1; // Cerca de 180°
+            
+            // EXCEPCIÓN PARA LA PRIMERA MONEDA: esperar más ángulo
+            let targetAngle, angleTolerancia;
+            if (range.coinIndex === 0) {
+                // Primera moneda: esperar hasta 195° (Math.PI + 0.26 radianes)
+                targetAngle = Math.PI + 0.26; // 195°
+                angleTolerancia = 0.15; // Tolerancia mayor
+                console.log(`Primera moneda - Ángulo actual: ${(currentAngle * 180 / Math.PI).toFixed(1)}°, Target: 195°`);
+            } else {
+                // Resto de monedas: 180° normal
+                targetAngle = Math.PI; // 180°
+                angleTolerancia = 0.1;
+            }
+            
+            const isAtTargetAngle = Math.abs(currentAngle - targetAngle) < angleTolerancia;
             
             const nextCoinIndex = range.coinIndex + 1;
             const hasNextCoin = nextCoinIndex < coins.length && nextCoinIndex < rotationRanges.length;
             
-            // Solo cambiar cuando estemos EN el subtítulo Y cerca de 180°
-            const shouldChangeCoin = isAtSubtitle && isAt180Degrees && hasNextCoin;
+            // Solo cambiar cuando estemos EN el subtítulo Y en el ángulo objetivo
+            const shouldChangeCoin = isAtSubtitle && isAtTargetAngle && hasNextCoin;
             
             return {
                 coinIndex: range.coinIndex,
@@ -191,7 +205,8 @@ function getCurrentCoinAndRotation(scrollTop) {
                 correctCoinIndex: range.coinIndex,
                 exactScrollPosition: scrollTop,
                 currentAngleInDegrees: (currentAngle * 180 / Math.PI).toFixed(1),
-                distanceToSubtitle: distanceToSubtitle.toFixed(1) // Para debug
+                distanceToSubtitle: distanceToSubtitle.toFixed(1),
+                targetAngleDegrees: (targetAngle * 180 / Math.PI).toFixed(1) // Para debug
             };
         }
     }
@@ -432,7 +447,7 @@ function animate() {
     // CAMBIO SOLO EN EL SUBTÍTULO
     else if (coinState.shouldChangeCoin && coinState.nextCoinIndex !== currentCoinIndex) {
         
-        console.log(`→ Cambio EN SUBTÍTULO a ${coinState.currentAngleInDegrees}° (distancia: ${coinState.distanceToSubtitle}px): moneda ${currentCoinIndex + 1} → ${coinState.nextCoinIndex + 1}`);
+        console.log(`→ Cambio EN SUBTÍTULO a ${coinState.currentAngleInDegrees}° (target: ${coinState.targetAngleDegrees}°, distancia: ${coinState.distanceToSubtitle}px): moneda ${currentCoinIndex + 1} → ${coinState.nextCoinIndex + 1}`);
         
         const currentCoin = coins[currentCoinIndex];
         const nextCoin = coins[coinState.nextCoinIndex];
