@@ -157,9 +157,19 @@ function getCurrentCoinAndRotation(scrollTop) {
             const angleDiff = range.endAngle - range.startAngle;
             const currentAngle = range.startAngle + (angleDiff * clampedProgress);
             
-            // Posición Y más suave y continua
-            const totalScrollPercent = scrollTop / (document.documentElement.scrollHeight - window.innerHeight);
-            const coinY = 2 - (totalScrollPercent * 4); // Movimiento más lineal
+            // POSICIÓN Y SUAVE: Evitar salto inicial
+            let coinY;
+            if (range.coinIndex === 0 && scrollTop < range.startPixel + 100) {
+                // Para la primera moneda, mantener posición inicial hasta que empecemos a scrollear
+                const transitionProgress = Math.min(1, (scrollTop - range.startPixel + 100) / 200);
+                const initialY = 0; // Posición inicial centrada
+                const targetY = 2 - (scrollTop / (document.documentElement.scrollHeight - window.innerHeight)) * 4;
+                coinY = initialY + (targetY - initialY) * Math.max(0, transitionProgress);
+            } else {
+                // Posición Y normal para el resto
+                const totalScrollPercent = scrollTop / (document.documentElement.scrollHeight - window.innerHeight);
+                coinY = 2 - (totalScrollPercent * 4);
+            }
             
             // Detectar proximidad al punto de cambio (subtítulo)
             const distanceToEnd = range.endPixel - scrollTop;
@@ -183,16 +193,36 @@ function getCurrentCoinAndRotation(scrollTop) {
         }
     }
     
-    // Si estamos antes del primer rango, mostrar primera moneda a 90°
+    // Si estamos antes del primer rango, mostrar primera moneda centrada
     if (scrollTop < rotationRanges[0]?.startPixel) {
-        return {
-            coinIndex: 0,
-            rotation: Math.PI / 2, // 90° - cara visible
-            positionY: 0,
-            progress: 0,
-            shouldChangeCoin: false,
-            correctCoinIndex: 0
-        };
+        // Transición suave desde el centro hacia la posición inicial del primer rango
+        const firstRange = rotationRanges[0];
+        if (firstRange && scrollTop > firstRange.startPixel - 200) {
+            // Zona de transición: 200px antes del primer range
+            const transitionProgress = (scrollTop - (firstRange.startPixel - 200)) / 200;
+            const startY = 0; // Centrado
+            const endY = 1; // Posición del primer range
+            const coinY = startY + (endY - startY) * Math.max(0, Math.min(1, transitionProgress));
+            
+            return {
+                coinIndex: 0,
+                rotation: Math.PI / 2, // 90° - cara visible
+                positionY: coinY,
+                progress: 0,
+                shouldChangeCoin: false,
+                correctCoinIndex: 0
+            };
+        } else {
+            // Completamente al inicio - mantener centrado
+            return {
+                coinIndex: 0,
+                rotation: Math.PI / 2, // 90° - cara visible
+                positionY: 0, // Centrado perfectamente
+                progress: 0,
+                shouldChangeCoin: false,
+                correctCoinIndex: 0
+            };
+        }
     }
     
     // Si estamos después del último rango, mostrar última moneda
@@ -344,9 +374,10 @@ function setupCoinProperties(coin, index) {
 function setupInitialCoin() {
     if (coins.length > 0 && coins[0]) {
         coins[0].visible = true;
+        coins[0].position.set(0, 0, 0); // Empezar exactamente en el centro
         coins[0].rotation.x = Math.PI / 2; // Mostrar cara inicial (90°)
         currentCoinIndex = 0;
-        console.log('✓ Primera moneda activada mostrando su cara (90°)');
+        console.log('✓ Primera moneda activada centrada y mostrando su cara (90°)');
         
         // Intentar cargar GLB después
         loadAllCoins();
