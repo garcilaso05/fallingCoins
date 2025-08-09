@@ -34,42 +34,80 @@ function init() {
 }
 
 function loadCoinModel() {
-    console.log('Cargando modelo coin.glb...');
+    console.log('Iniciando carga del modelo coin.glb...');
+    
+    // Verificar que GLTFLoader esté disponible
+    if (typeof THREE.GLTFLoader === 'undefined') {
+        console.error('GLTFLoader no está disponible');
+        createFallbackCoin();
+        return;
+    }
     
     const loader = new THREE.GLTFLoader();
     
-    loader.load(
-        './coin.glb',
-        function(gltf) {
-            console.log('¡Archivo coin.glb cargado exitosamente!', gltf);
-            
-            coin = gltf.scene;
-            
-            // Ajustar escala y posición
-            const box = new THREE.Box3().setFromObject(coin);
-            const size = box.getSize(new THREE.Vector3());
-            const maxDimension = Math.max(size.x, size.y, size.z);
-            const scale = 2 / maxDimension;
-            coin.scale.setScalar(scale);
-            
-            // Centrar la moneda
-            const center = box.getCenter(new THREE.Vector3());
-            coin.position.sub(center.multiplyScalar(scale));
-            
-            scene.add(coin);
-            console.log('Moneda agregada a la escena');
-        },
-        function(progress) {
-            console.log('Progreso de carga:', progress);
-        },
-        function(error) {
-            console.error('Error cargando coin.glb:', error);
-            console.log('Verifica que el archivo coin.glb esté en la misma carpeta');
-            
-            // Crear moneda temporal si falla la carga
-            createFallbackCoin();
-        }
-    );
+    // Intentar diferentes rutas del archivo
+    const possiblePaths = ['./coin.glb', 'coin.glb', '/coin.glb'];
+    let currentPathIndex = 0;
+    
+    function tryLoadPath() {
+        const currentPath = possiblePaths[currentPathIndex];
+        console.log(`Intentando cargar desde: ${currentPath}`);
+        
+        loader.load(
+            currentPath,
+            function(gltf) {
+                console.log('¡Archivo coin.glb cargado exitosamente!', gltf);
+                
+                coin = gltf.scene;
+                
+                // Verificar que el modelo tiene contenido
+                if (!coin.children || coin.children.length === 0) {
+                    console.warn('El modelo GLB parece estar vacío');
+                    createFallbackCoin();
+                    return;
+                }
+                
+                // Ajustar escala y posición
+                const box = new THREE.Box3().setFromObject(coin);
+                const size = box.getSize(new THREE.Vector3());
+                const maxDimension = Math.max(size.x, size.y, size.z);
+                
+                if (maxDimension > 0) {
+                    const scale = 2 / maxDimension;
+                    coin.scale.setScalar(scale);
+                    
+                    // Centrar la moneda
+                    const center = box.getCenter(new THREE.Vector3());
+                    coin.position.sub(center.multiplyScalar(scale));
+                }
+                
+                scene.add(coin);
+                console.log('Moneda agregada a la escena exitosamente');
+            },
+            function(progress) {
+                if (progress.lengthComputable) {
+                    const percent = (progress.loaded / progress.total * 100).toFixed(2);
+                    console.log(`Progreso de carga: ${percent}%`);
+                }
+            },
+            function(error) {
+                console.error(`Error cargando desde ${currentPath}:`, error);
+                
+                // Intentar la siguiente ruta
+                currentPathIndex++;
+                if (currentPathIndex < possiblePaths.length) {
+                    console.log('Intentando siguiente ruta...');
+                    tryLoadPath();
+                } else {
+                    console.log('Todas las rutas fallaron, creando moneda de respaldo');
+                    createFallbackCoin();
+                }
+            }
+        );
+    }
+    
+    // Comenzar a intentar cargar
+    tryLoadPath();
 }
 
 function createFallbackCoin() {
