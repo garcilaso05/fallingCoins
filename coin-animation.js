@@ -7,6 +7,12 @@ let coinsReady = false;
 let rotationRanges = []; // Array con los rangos de rotación para cada moneda
 let lastScrollTop = 0;
 
+// NUEVA FUNCIONALIDAD: Control de velocidad de rotación
+let globalRotationSpeed = 0.02; // Velocidad base de rotación
+let targetRotationSpeed = 0.02; // Velocidad objetivo
+let isMousePressed = false; // Estado del mouse/touch
+let speedTransitionRate = 0.05; // Velocidad de transición (más alto = más rápido)
+
 function init() {
     // Create scene
     scene = new THREE.Scene();
@@ -40,12 +46,50 @@ function init() {
     createFallbackCoins();
     calculateRotationRanges();
     setupScrollListener();
+    setupSpeedControlListeners(); // Nueva función
     
     // Start animation
     animate();
     
     // Handle window resize
     window.addEventListener('resize', onWindowResize, false);
+}
+
+// NUEVA FUNCIÓN: Setup de listeners para controlar velocidad
+function setupSpeedControlListeners() {
+    const container = document.getElementById('coin-container');
+    
+    // Mouse events
+    container.addEventListener('mousedown', function(e) {
+        isMousePressed = true;
+        targetRotationSpeed = 0; // Detener gradualmente
+        console.log('🖱️ Mouse presionado - desacelerando...');
+    });
+    
+    document.addEventListener('mouseup', function(e) {
+        isMousePressed = false;
+        targetRotationSpeed = 0.02; // Volver a velocidad normal
+        console.log('🖱️ Mouse liberado - acelerando...');
+    });
+    
+    // Touch events para móviles
+    container.addEventListener('touchstart', function(e) {
+        isMousePressed = true;
+        targetRotationSpeed = 0;
+        console.log('👆 Touch iniciado - desacelerando...');
+        e.preventDefault(); // Evitar scroll involuntario
+    });
+    
+    document.addEventListener('touchend', function(e) {
+        isMousePressed = false;
+        targetRotationSpeed = 0.02;
+        console.log('👆 Touch terminado - acelerando...');
+    });
+    
+    // Prevenir context menu en el área de la moneda
+    container.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
 }
 
 function setupScrollListener() {
@@ -410,6 +454,16 @@ function animate() {
     
     if (!coinsReady || rotationRanges.length === 0) return;
     
+    // ACTUALIZAR VELOCIDAD GLOBAL DE ROTACIÓN
+    // Interpolación suave hacia la velocidad objetivo
+    const speedDiff = targetRotationSpeed - globalRotationSpeed;
+    globalRotationSpeed += speedDiff * speedTransitionRate;
+    
+    // Clamp para evitar valores negativos mínimos
+    if (Math.abs(globalRotationSpeed) < 0.001) {
+        globalRotationSpeed = 0;
+    }
+    
     // Obtener estado actual basado en scroll
     const coinState = getCurrentCoinAndRotation(lastScrollTop);
     
@@ -437,7 +491,7 @@ function animate() {
         const nextCoin = coins[coinState.nextCoinIndex];
         
         if (currentCoin && nextCoin) {
-            // Sincronizar posición exacta
+            // Sincronizar posición exacta Y velocidad de rotación
             nextCoin.position.copy(currentCoin.position);
             nextCoin.rotation.y = currentCoin.rotation.y;
             nextCoin.rotation.x = Math.PI; // Preparar de canto
@@ -454,7 +508,7 @@ function animate() {
         const nextCoin = coins[coinState.nextCoinIndex];
         
         if (currentCoin && nextCoin) {
-            // Capturar estado exacto
+            // Capturar estado exacto (incluyendo velocidad heredada)
             const exactPosition = currentCoin.position.clone();
             const exactRotationY = currentCoin.rotation.y;
             const exactRotationZ = currentCoin.rotation.z;
@@ -462,6 +516,7 @@ function animate() {
             // Cambio atómico
             currentCoin.visible = false;
             
+            // La nueva moneda hereda la rotación Y actual (velocidad continua)
             nextCoin.position.copy(exactPosition);
             nextCoin.rotation.y = exactRotationY;
             nextCoin.rotation.x = Math.PI; // Empezar de canto
@@ -487,10 +542,10 @@ function animate() {
     currentCoin.position.x = 0;
     currentCoin.position.z = 0;
     
-    // Rotaciones
-    currentCoin.rotation.y += 0.02;
-    currentCoin.rotation.x = coinState.rotation;
-    currentCoin.rotation.z = Math.sin(Date.now() * 0.001) * 0.05;
+    // ROTACIONES CON VELOCIDAD VARIABLE
+    currentCoin.rotation.y += globalRotationSpeed; // Usar velocidad global variable
+    currentCoin.rotation.x = coinState.rotation; // Vertical basada en posición
+    currentCoin.rotation.z = Math.sin(Date.now() * 0.001) * 0.05; // Variación sutil
     
     renderer.render(scene, camera);
 }
