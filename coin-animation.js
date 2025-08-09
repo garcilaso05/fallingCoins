@@ -5,6 +5,7 @@ let scrollProgress = 0;
 let targetScrollProgress = 0;
 let subtitlePositions = [];
 let currentRotationTarget = 0;
+let coinsReady = false;
 
 function init() {
     // Create scene
@@ -35,11 +36,9 @@ function init() {
     rimLight.position.set(-3, -2, 1);
     scene.add(rimLight);
     
-    // Cargar todas las monedas
-    loadAllCoins();
-    
-    // Calculate subtitle positions and setup scroll listener
+    // Primero calcular subtítulos, luego cargar monedas
     calculateSubtitlePositions();
+    loadAllCoins();
     setupScrollListener();
     
     // Start animation
@@ -110,7 +109,7 @@ function setupScrollListener() {
 }
 
 function loadAllCoins() {
-    console.log('Iniciando carga de todas las monedas...');
+    console.log('Precargando todas las monedas...');
     
     if (typeof THREE.GLTFLoader === 'undefined') {
         console.error('GLTFLoader no está disponible');
@@ -119,15 +118,19 @@ function loadAllCoins() {
     }
     
     const loader = new THREE.GLTFLoader();
-    const totalCoins = 5; // Simplificado a 5 monedas fijas
+    const totalCoins = Math.max(subtitlePositions.length, 5);
     let coinsLoaded = 0;
+    
+    console.log(`Cargando ${totalCoins} monedas...`);
     
     for (let i = 0; i < totalCoins; i++) {
         const coinPaths = [`./coin${i + 1}.glb`, `coin${i + 1}.glb`, `/coin${i + 1}.glb`];
         loadCoinWithFallback(loader, coinPaths, i, () => {
             coinsLoaded++;
+            console.log(`Monedas cargadas: ${coinsLoaded}/${totalCoins}`);
             if (coinsLoaded === totalCoins) {
-                console.log('Todas las monedas cargadas');
+                console.log('Todas las monedas precargadas exitosamente');
+                coinsReady = true;
                 setupInitialCoin();
             }
         });
@@ -220,56 +223,66 @@ function setupCoinProperties(coin, index) {
     
     // Posición inicial
     coin.position.set(0, 3, 0);
+    coin.rotation.set(0, 0, 0);
     
-    // Solo la primera moneda visible
-    coin.visible = index === 0;
+    // NUNCA tocar los materiales - mantener propiedades originales
+    // Solo controlar visibilidad
+    coin.visible = false;
     
-    // Añadir al array de monedas
+    // Añadir al array
     coins[index] = coin;
     scene.add(coin);
     
-    console.log(`Moneda ${index + 1} configurada`);
+    console.log(`Moneda ${index + 1} precargada y lista`);
 }
 
 function setupInitialCoin() {
     if (coins.length > 0 && coins[0]) {
-        console.log('Primera moneda lista para animación');
+        coins[0].visible = true;
+        currentCoinIndex = 0;
+        console.log('Primera moneda activada');
     }
 }
 
 function calculateCoinRotation() {
     if (subtitlePositions.length === 0) return { rotation: 0, sectionIndex: 0 };
     
-    // Encontrar en qué sección estamos basándose SOLO en el scroll
-    const totalSections = subtitlePositions.length - 1; // -1 porque el primer elemento es la posición inicial
-    const sectionIndex = Math.floor(targetScrollProgress * totalSections);
-    const clampedSectionIndex = Math.max(0, Math.min(sectionIndex, totalSections - 1));
+    // Calcular en qué sección estamos basándose en el scroll
+    const totalSections = subtitlePositions.length - 1;
+    const currentSection = targetScrollProgress * totalSections;
+    const sectionIndex = Math.floor(currentSection);
+    const sectionProgress = currentSection - sectionIndex;
     
-    // Progreso dentro de la sección actual (0 a 1)
-    const sectionProgress = (targetScrollProgress * totalSections) % 1;
-    
-    // Rotación objetivo: 180º por cada sección
-    const targetRotation = clampedSectionIndex * Math.PI + (sectionProgress * Math.PI);
+    // Cada sección = 180 grados (Math.PI radianes)
+    const totalRotation = sectionIndex * Math.PI + sectionProgress * Math.PI;
     
     return { 
-        rotation: targetRotation, 
-        sectionIndex: clampedSectionIndex,
+        rotation: totalRotation, 
+        sectionIndex: Math.min(sectionIndex, totalSections - 1),
         sectionProgress: sectionProgress
     };
 }
 
-function shouldChangeCoin(sectionIndex, sectionProgress) {
-    // Cambiar de moneda cuando completamos aproximadamente 180º (sectionProgress > 0.9)
-    // y estamos en una nueva sección
-    const targetCoinIndex = Math.min(sectionIndex, coins.length - 1);
+function checkCoinChange(rotationData) {
+    if (!coinsReady) return;
     
-    return (targetCoinIndex !== currentCoinIndex && 
-            sectionProgress > 0.9 && 
-            coins[targetCoinIndex]);
+    const { sectionIndex, sectionProgress } = rotationData;
+    
+    // Cambiar cuando completamos 180° (sectionProgress >= 1.0)
+    const shouldChangeToNext = sectionProgress >= 0.98 && sectionIndex > currentCoinIndex;
+    const shouldChangeToPrev = sectionProgress <= 0.02 && sectionIndex < currentCoinIndex;
+    
+    if (shouldChangeToNext || shouldChangeToPrev) {
+        const newCoinIndex = Math.min(sectionIndex, coins.length - 1);
+        
+        if (newCoinIndex !== currentCoinIndex && coins[newCoinIndex]) {
+            switchToCoin(newCoinIndex);
+        }
+    }
 }
 
-function changeCoin(newIndex) {
-    console.log(`Cambiando de moneda ${currentCoinIndex + 1} a ${newIndex + 1}`);
+function switchToCoin(newIndex) {
+    console.log(`Cambiando a moneda ${newIndex + 1}`);
     
     // Ocultar moneda actual
     if (coins[currentCoinIndex]) {
@@ -278,14 +291,17 @@ function changeCoin(newIndex) {
     
     // Mostrar nueva moneda
     if (coins[newIndex]) {
-        const currentCoin = coins[currentCoinIndex];
+        const oldCoin = coins[currentCoinIndex];
         const newCoin = coins[newIndex];
         
-        // Copiar posición y rotación Y, Z de la moneda actual
-        newCoin.position.copy(currentCoin.position);
-        newCoin.rotation.y = currentCoin.rotation.y;
-        newCoin.rotation.z = currentCoin.rotation.z;
-        newCoin.rotation.x = 0; // Nueva moneda empieza plana
+        // Copiar solo posición Y y rotación Y (horizontal)
+        newCoin.position.y = oldCoin.position.y;
+        newCoin.position.x = 0;
+        newCoin.position.z = 0;
+        
+        newCoin.rotation.y = oldCoin.rotation.y;
+        newCoin.rotation.x = 0; // Nueva moneda empieza en 0°
+        newCoin.rotation.z = 0;
         
         newCoin.visible = true;
         currentCoinIndex = newIndex;
@@ -295,35 +311,30 @@ function changeCoin(newIndex) {
 function animate() {
     requestAnimationFrame(animate);
     
+    if (!coinsReady || !coins[currentCoinIndex]) return;
+    
     const currentCoin = coins[currentCoinIndex];
-    if (currentCoin && currentCoin.visible) {
-        // Suavizar el progreso del scroll
-        scrollProgress += (targetScrollProgress - scrollProgress) * 0.08;
-        
-        // MOVIMIENTO VERTICAL: Solo basado en el scroll
-        const scrollRange = 8;
-        currentCoin.position.y = 3 - (scrollProgress * scrollRange);
-        
-        // ROTACIÓN HORIZONTAL: Continua
-        currentCoin.rotation.y += 0.02;
-        
-        // ROTACIÓN VERTICAL: Basada en el scroll
-        const rotationData = calculateCoinRotation();
-        currentRotationTarget += (rotationData.rotation - currentRotationTarget) * 0.05;
-        currentCoin.rotation.x = currentRotationTarget;
-        
-        // POSICIÓN X: Fija
-        currentCoin.position.x = 0;
-        
-        // ROTACIÓN Z: Variación sutil
-        currentCoin.rotation.z = Math.sin(Date.now() * 0.001) * 0.05;
-        
-        // Verificar si necesitamos cambiar de moneda
-        if (shouldChangeCoin(rotationData.sectionIndex, rotationData.sectionProgress)) {
-            const newIndex = Math.min(rotationData.sectionIndex, coins.length - 1);
-            changeCoin(newIndex);
-        }
-    }
+    
+    // Suavizar scroll
+    scrollProgress += (targetScrollProgress - scrollProgress) * 0.08;
+    
+    // MOVIMIENTO VERTICAL: Solo Y
+    const scrollRange = 8;
+    currentCoin.position.y = 3 - (scrollProgress * scrollRange);
+    
+    // ROTACIÓN HORIZONTAL: Continua
+    currentCoin.rotation.y += 0.02;
+    
+    // ROTACIÓN VERTICAL: Basada en subtítulos
+    const rotationData = calculateCoinRotation();
+    currentRotationTarget += (rotationData.rotation - currentRotationTarget) * 0.05;
+    currentCoin.rotation.x = currentRotationTarget;
+    
+    // POSICIÓN X fija
+    currentCoin.position.x = 0;
+    
+    // Verificar cambio de moneda
+    checkCoinChange(rotationData);
     
     renderer.render(scene, camera);
 }
