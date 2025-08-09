@@ -4,8 +4,8 @@ let currentCoinIndex = 0;
 let scrollProgress = 0;
 let targetScrollProgress = 0;
 let coinsReady = false;
-let totalRotation = 0;
-let lastScrollProgress = 0;
+let rotationRanges = []; // Array con los rangos de rotación para cada moneda
+let lastScrollTop = 0;
 
 function init() {
     // Create scene
@@ -36,8 +36,9 @@ function init() {
     rimLight.position.set(-3, -2, 1);
     scene.add(rimLight);
     
-    // Simplificar: crear monedas de respaldo inmediatamente
+    // Crear monedas y calcular rangos
     createFallbackCoins();
+    calculateRotationRanges();
     setupScrollListener();
     
     // Start animation
@@ -52,11 +53,7 @@ function setupScrollListener() {
     
     function updateScrollProgress() {
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-        
-        // Calcular progreso del scroll (0 a 1)
-        targetScrollProgress = Math.max(0, Math.min(1, scrollTop / scrollHeight));
-        
+        lastScrollTop = scrollTop;
         ticking = false;
     }
     
@@ -66,6 +63,136 @@ function setupScrollListener() {
             ticking = true;
         }
     });
+}
+
+function calculateRotationRanges() {
+    console.log('Calculando rangos de rotación...');
+    
+    // Obtener posiciones de elementos clave
+    const title = document.querySelector('.content h1');
+    const subtitles = document.querySelectorAll('.content h2');
+    
+    if (!title) {
+        console.error('No se encontró el título');
+        return;
+    }
+    
+    rotationRanges = [];
+    
+    // Calcular posición del título (centro = 90° para moneda 1)
+    const titleRect = title.getBoundingClientRect();
+    const titleCenter = titleRect.top + window.pageYOffset + (titleRect.height / 2);
+    
+    console.log(`Título centrado en: ${titleCenter}px`);
+    
+    // Primera moneda: desde 90° (título) hasta 180° (primer subtítulo)
+    if (subtitles.length > 0) {
+        const firstSubtitleRect = subtitles[0].getBoundingClientRect();
+        const firstSubtitleCenter = firstSubtitleRect.top + window.pageYOffset + (firstSubtitleRect.height / 2);
+        
+        rotationRanges.push({
+            coinIndex: 0,
+            startPixel: titleCenter,
+            endPixel: firstSubtitleCenter,
+            startAngle: Math.PI / 2, // 90°
+            endAngle: Math.PI, // 180°
+            direction: 'forward'
+        });
+        
+        console.log(`Moneda 1: ${titleCenter}px (90°) → ${firstSubtitleCenter}px (180°)`);
+    }
+    
+    // Resto de monedas: alternar entre 180°→0° y 0°→180°
+    for (let i = 0; i < subtitles.length - 1; i++) {
+        const currentSubtitleRect = subtitles[i].getBoundingClientRect();
+        const nextSubtitleRect = subtitles[i + 1].getBoundingClientRect();
+        
+        const currentCenter = currentSubtitleRect.top + window.pageYOffset + (currentSubtitleRect.height / 2);
+        const nextCenter = nextSubtitleRect.top + window.pageYOffset + (nextSubtitleRect.height / 2);
+        
+        // Alternar dirección: par = 180°→0°, impar = 0°→180°
+        const isEven = i % 2 === 0;
+        
+        rotationRanges.push({
+            coinIndex: i + 1,
+            startPixel: currentCenter,
+            endPixel: nextCenter,
+            startAngle: isEven ? Math.PI : 0, // 180° o 0°
+            endAngle: isEven ? 0 : Math.PI, // 0° o 180°
+            direction: isEven ? 'backward' : 'forward'
+        });
+        
+        console.log(`Moneda ${i + 2}: ${currentCenter}px (${isEven ? '180°' : '0°'}) → ${nextCenter}px (${isEven ? '0°' : '180°'})`);
+    }
+    
+    // Última moneda: desde último subtítulo hasta el final
+    if (subtitles.length > 0) {
+        const lastSubtitleRect = subtitles[subtitles.length - 1].getBoundingClientRect();
+        const lastCenter = lastSubtitleRect.top + window.pageYOffset + (lastSubtitleRect.height / 2);
+        const documentHeight = document.documentElement.scrollHeight;
+        
+        const isLastEven = (subtitles.length - 1) % 2 === 0;
+        
+        rotationRanges.push({
+            coinIndex: subtitles.length,
+            startPixel: lastCenter,
+            endPixel: documentHeight,
+            startAngle: isLastEven ? 0 : Math.PI,
+            endAngle: isLastEven ? Math.PI : 0,
+            direction: isLastEven ? 'forward' : 'backward'
+        });
+        
+        console.log(`Moneda ${subtitles.length + 1}: ${lastCenter}px → ${documentHeight}px`);
+    }
+    
+    console.log('Rangos calculados:', rotationRanges);
+}
+
+function getCurrentCoinAndRotation(scrollTop) {
+    // Encontrar en qué rango estamos
+    for (let i = 0; i < rotationRanges.length; i++) {
+        const range = rotationRanges[i];
+        
+        if (scrollTop >= range.startPixel && scrollTop <= range.endPixel) {
+            // Calcular progreso dentro del rango (0 a 1)
+            const progress = (scrollTop - range.startPixel) / (range.endPixel - range.startPixel);
+            const clampedProgress = Math.max(0, Math.min(1, progress));
+            
+            // Calcular ángulo interpolado
+            const angleDiff = range.endAngle - range.startAngle;
+            const currentAngle = range.startAngle + (angleDiff * clampedProgress);
+            
+            // Calcular posición Y de la moneda (siempre visible en pantalla)
+            const viewportHeight = window.innerHeight;
+            const coinY = Math.max(-2, Math.min(2, (scrollTop / 1000) - 1)); // Mantener en rango visible
+            
+            return {
+                coinIndex: range.coinIndex,
+                rotation: currentAngle,
+                positionY: coinY,
+                progress: clampedProgress
+            };
+        }
+    }
+    
+    // Si estamos antes del primer rango, mostrar primera moneda a 90°
+    if (scrollTop < rotationRanges[0]?.startPixel) {
+        return {
+            coinIndex: 0,
+            rotation: Math.PI / 2, // 90°
+            positionY: 1,
+            progress: 0
+        };
+    }
+    
+    // Si estamos después del último rango, mostrar última moneda
+    const lastRange = rotationRanges[rotationRanges.length - 1];
+    return {
+        coinIndex: lastRange.coinIndex,
+        rotation: lastRange.endAngle,
+        positionY: -2,
+        progress: 1
+    };
 }
 
 function loadAllCoins() {
@@ -219,59 +346,37 @@ function setupInitialCoin() {
 function animate() {
     requestAnimationFrame(animate);
     
-    if (!coinsReady) {
-        console.log('Esperando monedas...');
-        return;
-    }
+    if (!coinsReady || rotationRanges.length === 0) return;
     
-    if (!coins[currentCoinIndex]) {
-        console.log('Moneda actual no existe:', currentCoinIndex);
-        return;
-    }
+    // Obtener estado actual basado en scroll
+    const coinState = getCurrentCoinAndRotation(lastScrollTop);
     
-    const currentCoin = coins[currentCoinIndex];
-    
-    // Suavizar scroll
-    scrollProgress += (targetScrollProgress - scrollProgress) * 0.1;
-    
-    // MOVIMIENTO VERTICAL
-    const scrollRange = 8;
-    currentCoin.position.y = 1 - (scrollProgress * scrollRange);
-    
-    // ROTACIÓN HORIZONTAL continua
-    currentCoin.rotation.y += 0.02;
-    
-    // ROTACIÓN VERTICAL basada en scroll
-    const scrollDelta = Math.abs(targetScrollProgress - lastScrollProgress);
-    if (scrollDelta > 0.0001) {
-        totalRotation += scrollDelta * 5; // Velocidad de rotación
-        currentCoin.rotation.x = totalRotation;
-        
-        // Cambiar moneda cada 180° (Math.PI)
-        const rotationsCompleted = Math.floor(totalRotation / Math.PI);
-        const targetCoinIndex = Math.min(rotationsCompleted, coins.length - 1);
-        
-        if (targetCoinIndex !== currentCoinIndex && coins[targetCoinIndex]) {
-            console.log(`→ Cambiando a moneda ${targetCoinIndex + 1}`);
-            
-            // Ocultar actual
+    // Cambiar moneda si es necesario
+    if (coinState.coinIndex !== currentCoinIndex) {
+        if (coins[currentCoinIndex]) {
             coins[currentCoinIndex].visible = false;
-            
-            // Mostrar nueva
-            const newCoin = coins[targetCoinIndex];
-            newCoin.position.copy(currentCoin.position);
-            newCoin.rotation.y = currentCoin.rotation.y;
-            newCoin.rotation.x = 0; // Nueva moneda plana
-            newCoin.rotation.z = 0;
-            newCoin.visible = true;
-            
-            currentCoinIndex = targetCoinIndex;
-            totalRotation = 0; // Reset
+        }
+        
+        currentCoinIndex = Math.min(coinState.coinIndex, coins.length - 1);
+        
+        if (coins[currentCoinIndex]) {
+            coins[currentCoinIndex].visible = true;
+            console.log(`→ Cambiando a moneda ${currentCoinIndex + 1}`);
         }
     }
     
-    lastScrollProgress = targetScrollProgress;
+    const currentCoin = coins[currentCoinIndex];
+    if (!currentCoin) return;
+    
+    // Aplicar transformaciones
+    currentCoin.position.y = coinState.positionY;
     currentCoin.position.x = 0;
+    currentCoin.position.z = 0;
+    
+    // Rotaciones
+    currentCoin.rotation.y += 0.02; // Horizontal continua
+    currentCoin.rotation.x = coinState.rotation; // Vertical basada en posición
+    currentCoin.rotation.z = 0;
     
     renderer.render(scene, camera);
 }
@@ -281,6 +386,11 @@ function onWindowResize() {
     camera.aspect = container.offsetWidth / container.offsetHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(container.offsetWidth, container.offsetHeight);
+    
+    // Recalcular rangos cuando cambie el tamaño
+    setTimeout(() => {
+        calculateRotationRanges();
+    }, 100);
 }
 
 // Initialize the scene
