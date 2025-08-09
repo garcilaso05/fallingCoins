@@ -1,3 +1,5 @@
-coin1 : esql
-coin2 : reloj
-coin3 : excel
+coin1 : logo (empresa)
+coin2 : reloj (ahorrar tiempo)
+coin3 : excel (evitar)
+coin4 : candado (seguridad)
+coin5 : lingotes (ahorrar dinero)

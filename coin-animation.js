@@ -309,9 +309,9 @@ function loadAllCoins() {
     }
     
     const loader = new THREE.GLTFLoader();
-    const coinNames = ['esql', 'reloj', 'excel']; // Basado en #glb3D.txt
+    const coinNames = ['logo', 'reloj', 'excel', 'candado', 'lingotes']; // Actualizado según tu descripción
     
-    // Intentar cargar solo las 3 monedas reales
+    // Intentar cargar las 5 monedas reales
     for (let i = 0; i < coinNames.length; i++) {
         const coinPaths = [`./coin${i + 1}.glb`, `coin${i + 1}.glb`];
         
@@ -365,21 +365,20 @@ function createFallbackCoins() {
     console.log('Creando monedas de respaldo inmediatamente...');
     
     const coinData = [
-        { color: 0xffd700, name: 'SQL' },
-        { color: 0xc0c0c0, name: 'TIME' },
-        { color: 0xcd7f32, name: 'XLS' },
-        { color: 0xff6b35, name: 'COIN4' },
-        { color: 0x4ecdc4, name: 'COIN5' },
-        { color: 0x9b59b6, name: 'COIN6' }
+        { color: 0xffd700, name: 'LOGO EMPRESA' },     // 1. Logo empresa (dorado)
+        { color: 0x4a90e2, name: 'TIEMPO' },          // 2. Reloj - ahorrar tiempo (azul)
+        { color: 0x228b22, name: 'EXCEL' },           // 3. Excel - lo que evitamos (verde)
+        { color: 0x8b4513, name: 'SEGURIDAD' },       // 4. Candado - seguridad (marrón/bronce)
+        { color: 0xdaa520, name: 'LINGOTES' }         // 5. Lingotes - ahorrar dinero (oro)
     ];
     
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 5; i++) { // Cambié de 6 a 5 monedas
         createFallbackCoin(i, coinData[i]);
     }
     
     coinsReady = true;
     setupInitialCoin();
-    console.log('6 monedas de respaldo creadas y listas');
+    console.log('5 monedas de respaldo creadas y listas (Logo, Tiempo, Excel, Seguridad, Lingotes)');
 }
 
 function createFallbackCoin(index, data) {
