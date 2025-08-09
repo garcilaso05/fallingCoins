@@ -4,7 +4,7 @@ let currentCoinIndex = 0;
 let scrollProgress = 0;
 let targetScrollProgress = 0;
 let coinsReady = false;
-let totalRotation = 0; // Contador simple de rotación total
+let totalRotation = 0;
 let lastScrollProgress = 0;
 
 function init() {
@@ -36,8 +36,8 @@ function init() {
     rimLight.position.set(-3, -2, 1);
     scene.add(rimLight);
     
-    // Simplificar: cargar monedas primero, después setup
-    loadAllCoins();
+    // Simplificar: crear monedas de respaldo inmediatamente
+    createFallbackCoins();
     setupScrollListener();
     
     // Start animation
@@ -69,27 +69,23 @@ function setupScrollListener() {
 }
 
 function loadAllCoins() {
-    console.log('Cargando monedas...');
+    console.log('Intentando cargar monedas GLB...');
     
     if (typeof THREE.GLTFLoader === 'undefined') {
-        console.error('GLTFLoader no está disponible');
-        createFallbackCoins();
-        return;
+        console.log('GLTFLoader no disponible, usando monedas de respaldo');
+        return; // Las monedas de respaldo ya están creadas
     }
     
     const loader = new THREE.GLTFLoader();
-    const totalCoins = 6; // Número fijo de monedas
-    let coinsLoaded = 0;
+    const coinNames = ['esql', 'reloj', 'excel']; // Basado en #glb3D.txt
     
-    for (let i = 0; i < totalCoins; i++) {
-        const coinPaths = [`./coin${i + 1}.glb`, `coin${i + 1}.glb`, `/coin${i + 1}.glb`];
-        loadCoinWithFallback(loader, coinPaths, i, () => {
-            coinsLoaded++;
-            console.log(`Monedas cargadas: ${coinsLoaded}/${totalCoins}`);
-            if (coinsLoaded === totalCoins) {
-                console.log('Todas las monedas cargadas');
-                coinsReady = true;
-                setupInitialCoin();
+    // Intentar cargar solo las 3 monedas reales
+    for (let i = 0; i < coinNames.length; i++) {
+        const coinPaths = [`./coin${i + 1}.glb`, `coin${i + 1}.glb`];
+        
+        loadCoinWithFallback(loader, coinPaths, i, (success) => {
+            if (success) {
+                console.log(`Moneda GLB ${i + 1} (${coinNames[i]}) cargada y reemplazada`);
             }
         });
     }
@@ -100,24 +96,31 @@ function loadCoinWithFallback(loader, paths, coinIndex, onComplete) {
     
     function tryLoadPath() {
         const currentPath = paths[pathIndex];
-        console.log(`Cargando moneda ${coinIndex + 1}: ${currentPath}`);
+        console.log(`Intentando cargar: ${currentPath}`);
         
         loader.load(
             currentPath,
             function(gltf) {
-                console.log(`Moneda ${coinIndex + 1} cargada`);
+                console.log(`¡GLB cargado! Reemplazando moneda ${coinIndex + 1}`);
+                
+                // Remover moneda de respaldo actual
+                if (coins[coinIndex]) {
+                    scene.remove(coins[coinIndex]);
+                }
+                
+                // Configurar nueva moneda GLB
                 setupCoinProperties(gltf.scene, coinIndex);
-                onComplete();
+                onComplete(true);
             },
             undefined,
             function(error) {
-                console.error(`Error moneda ${coinIndex + 1}:`, error);
+                console.log(`Error cargando ${currentPath}: ${error.message}`);
                 pathIndex++;
                 if (pathIndex < paths.length) {
                     tryLoadPath();
                 } else {
-                    createFallbackCoin(coinIndex);
-                    onComplete();
+                    console.log(`Manteniendo moneda de respaldo ${coinIndex + 1}`);
+                    onComplete(false);
                 }
             }
         );
@@ -127,38 +130,67 @@ function loadCoinWithFallback(loader, paths, coinIndex, onComplete) {
 }
 
 function createFallbackCoins() {
+    console.log('Creando monedas de respaldo inmediatamente...');
+    
+    const coinData = [
+        { color: 0xffd700, name: 'SQL' },
+        { color: 0xc0c0c0, name: 'TIME' },
+        { color: 0xcd7f32, name: 'XLS' },
+        { color: 0xff6b35, name: 'COIN4' },
+        { color: 0x4ecdc4, name: 'COIN5' },
+        { color: 0x9b59b6, name: 'COIN6' }
+    ];
+    
     for (let i = 0; i < 6; i++) {
-        createFallbackCoin(i);
+        createFallbackCoin(i, coinData[i]);
     }
+    
     coinsReady = true;
     setupInitialCoin();
+    console.log('6 monedas de respaldo creadas y listas');
 }
 
-function createFallbackCoin(index) {
-    console.log(`Creando moneda respaldo ${index + 1}`);
-    const geometry = new THREE.CylinderGeometry(1, 1, 0.15, 32);
-    const colors = [0xffd700, 0xc0c0c0, 0xcd7f32, 0xff6b35, 0x4ecdc4, 0x9b59b6];
+function createFallbackCoin(index, data) {
+    // Crear geometría de moneda
+    const geometry = new THREE.CylinderGeometry(1.2, 1.2, 0.2, 32);
     const material = new THREE.MeshPhongMaterial({ 
-        color: colors[index % colors.length],
-        shininess: 100
+        color: data.color,
+        shininess: 100,
+        metalness: 0.8,
+        roughness: 0.2
     });
+    
     const coin = new THREE.Mesh(geometry, material);
+    
+    // Añadir texto en la moneda (opcional)
+    const textGeometry = new THREE.RingGeometry(0.3, 1.0, 8);
+    const textMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0x000000,
+        transparent: true,
+        opacity: 0.3
+    });
+    const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+    textMesh.rotation.x = Math.PI / 2;
+    textMesh.position.y = 0.11;
+    coin.add(textMesh);
+    
     setupCoinProperties(coin, index);
+    console.log(`Moneda respaldo ${index + 1} (${data.name}) creada`);
 }
 
 function setupCoinProperties(coin, index) {
-    // Escalar moneda
+    // Ajustar escala si es necesario
     const box = new THREE.Box3().setFromObject(coin);
     const size = box.getSize(new THREE.Vector3());
     const maxDimension = Math.max(size.x, size.y, size.z);
     
-    if (maxDimension > 0) {
-        const scale = 1.5 / maxDimension;
+    if (maxDimension > 2.5) { // Solo escalar si es muy grande
+        const scale = 2.0 / maxDimension;
         coin.scale.setScalar(scale);
     }
     
-    // Posición inicial
-    coin.position.set(0, 2, 0);
+    // Posición inicial visible
+    coin.position.set(0, 0, 0);
     coin.rotation.set(0, 0, 0);
     
     // Solo primera moneda visible
@@ -167,7 +199,7 @@ function setupCoinProperties(coin, index) {
     coins[index] = coin;
     scene.add(coin);
     
-    console.log(`Moneda ${index + 1} lista`);
+    console.log(`Moneda ${index + 1} configurada y añadida a la escena`);
 }
 
 function setupInitialCoin() {
@@ -175,40 +207,52 @@ function setupInitialCoin() {
         coins[0].visible = true;
         currentCoinIndex = 0;
         totalRotation = 0;
-        console.log('Primera moneda activada');
+        console.log('✓ Primera moneda activada y visible');
+        
+        // Intentar cargar GLB después
+        loadAllCoins();
+    } else {
+        console.error('No hay monedas disponibles');
     }
 }
 
 function animate() {
     requestAnimationFrame(animate);
     
-    if (!coinsReady || !coins[currentCoinIndex]) return;
+    if (!coinsReady) {
+        console.log('Esperando monedas...');
+        return;
+    }
+    
+    if (!coins[currentCoinIndex]) {
+        console.log('Moneda actual no existe:', currentCoinIndex);
+        return;
+    }
     
     const currentCoin = coins[currentCoinIndex];
     
     // Suavizar scroll
     scrollProgress += (targetScrollProgress - scrollProgress) * 0.1;
     
-    // MOVIMIENTO VERTICAL basado en scroll
-    const scrollRange = 10;
-    currentCoin.position.y = 2 - (scrollProgress * scrollRange);
+    // MOVIMIENTO VERTICAL
+    const scrollRange = 8;
+    currentCoin.position.y = 1 - (scrollProgress * scrollRange);
     
     // ROTACIÓN HORIZONTAL continua
     currentCoin.rotation.y += 0.02;
     
-    // ROTACIÓN VERTICAL basada en diferencia de scroll
+    // ROTACIÓN VERTICAL basada en scroll
     const scrollDelta = Math.abs(targetScrollProgress - lastScrollProgress);
-    if (scrollDelta > 0.001) { // Solo rotar si hay movimiento real
-        totalRotation += scrollDelta * 8; // Factor de multiplicación para controlar velocidad
+    if (scrollDelta > 0.0001) {
+        totalRotation += scrollDelta * 5; // Velocidad de rotación
         currentCoin.rotation.x = totalRotation;
         
-        // Verificar si completamos 180° (Math.PI radianes)
+        // Cambiar moneda cada 180° (Math.PI)
         const rotationsCompleted = Math.floor(totalRotation / Math.PI);
         const targetCoinIndex = Math.min(rotationsCompleted, coins.length - 1);
         
-        // Cambiar moneda si es necesario
         if (targetCoinIndex !== currentCoinIndex && coins[targetCoinIndex]) {
-            console.log(`Cambiando a moneda ${targetCoinIndex + 1} después de ${rotationsCompleted} rotaciones`);
+            console.log(`→ Cambiando a moneda ${targetCoinIndex + 1}`);
             
             // Ocultar actual
             coins[currentCoinIndex].visible = false;
@@ -217,18 +261,16 @@ function animate() {
             const newCoin = coins[targetCoinIndex];
             newCoin.position.copy(currentCoin.position);
             newCoin.rotation.y = currentCoin.rotation.y;
-            newCoin.rotation.x = 0; // Nueva moneda empieza plana
+            newCoin.rotation.x = 0; // Nueva moneda plana
             newCoin.rotation.z = 0;
             newCoin.visible = true;
             
             currentCoinIndex = targetCoinIndex;
-            totalRotation = 0; // Resetear contador para nueva moneda
+            totalRotation = 0; // Reset
         }
     }
     
     lastScrollProgress = targetScrollProgress;
-    
-    // POSICIÓN X centrada
     currentCoin.position.x = 0;
     
     renderer.render(scene, camera);
