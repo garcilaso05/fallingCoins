@@ -160,9 +160,10 @@ function getCurrentCoinAndRotation(scrollTop) {
             // Posición Y controlada - nunca sale de pantalla
             const coinY = Math.max(-2, Math.min(2, -1 + (clampedProgress * 0.5)));
             
-            // Determinar si necesitamos cambiar de moneda
+            // CAMBIO EXACTO: Solo cuando llegamos exactamente a 180° (Math.PI)
+            const isAtEdge = Math.abs(currentAngle - Math.PI) < 0.01; // Tolerancia muy pequeña
             const nextCoinIndex = range.coinIndex + 1;
-            const shouldChangeCoin = clampedProgress >= 0.98 && nextCoinIndex < coins.length && 
+            const shouldChangeCoin = isAtEdge && nextCoinIndex < coins.length && 
                                    nextCoinIndex < rotationRanges.length;
             
             return {
@@ -172,8 +173,8 @@ function getCurrentCoinAndRotation(scrollTop) {
                 positionY: coinY,
                 progress: clampedProgress,
                 shouldChangeCoin: shouldChangeCoin,
-                transitionProgress: shouldChangeCoin ? (clampedProgress - 0.98) / 0.02 : 0,
-                correctCoinIndex: range.coinIndex // La moneda que debería estar activa
+                isAtEdge: isAtEdge,
+                correctCoinIndex: range.coinIndex
             };
         }
     }
@@ -380,20 +381,26 @@ function animate() {
         }
     }
     
-    // Manejo de transición fluida para cambios normales
-    else if (coinState.shouldChangeCoin && coinState.nextCoinIndex !== currentCoinIndex) {
+    // TRANSICIÓN PERFECTA: Solo cuando estamos exactamente de canto (180°)
+    else if (coinState.shouldChangeCoin && coinState.isAtEdge && coinState.nextCoinIndex !== currentCoinIndex) {
         
-        // Preparar nueva moneda para transición suave
+        console.log(`→ Cambio exacto a 180°: moneda ${currentCoinIndex + 1} → ${coinState.nextCoinIndex + 1}`);
+        
+        // Ocultar moneda actual (está exactamente de canto)
+        if (coins[currentCoinIndex]) {
+            coins[currentCoinIndex].visible = false;
+        }
+        
+        // Mostrar nueva moneda también de canto (180°) para continuidad visual
         const nextCoin = coins[coinState.nextCoinIndex];
         if (nextCoin) {
-            // Posicionar nueva moneda exactamente donde está la actual
-            nextCoin.position.copy(coins[currentCoinIndex].position);
-            nextCoin.rotation.y = coins[currentCoinIndex].rotation.y;
-            nextCoin.rotation.x = 0; // Nueva moneda empieza mostrando cara
-            nextCoin.rotation.z = coins[currentCoinIndex].rotation.z;
+            nextCoin.position.y = coinState.positionY;
+            nextCoin.position.x = 0;
+            nextCoin.position.z = 0;
+            nextCoin.rotation.y = coins[currentCoinIndex] ? coins[currentCoinIndex].rotation.y : 0;
+            nextCoin.rotation.x = Math.PI; // Empezar exactamente de canto
+            nextCoin.rotation.z = 0;
             nextCoin.visible = true;
-            
-            console.log(`→ Transición fluida iniciada: ${currentCoinIndex + 1} → ${coinState.nextCoinIndex + 1}`);
         }
         
         // Cambiar inmediatamente el índice activo
