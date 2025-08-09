@@ -283,20 +283,21 @@ function calculateCoinRotation() {
 function handleCoinTransition(rotationData) {
     const { sectionIndex, sectionProgress } = rotationData;
     
-    // Detectar cuando necesitamos cambiar de moneda
-    const shouldTransition = Math.abs(sectionProgress - 0.5) < 0.1; // Cerca del punto medio (90º)
+    // Determinar qué moneda debería estar activa basándose en la sección
+    const targetCoinIndex = Math.min(sectionIndex, coins.length - 1);
     
-    if (shouldTransition && !isTransitioning) {
-        const newCoinIndex = sectionIndex % coins.length;
-        
-        if (newCoinIndex !== currentCoinIndex && coins[newCoinIndex]) {
-            startCoinTransition(newCoinIndex);
-        }
+    // Solo iniciar transición si realmente necesitamos cambiar de moneda
+    // y cuando la rotación esté cerca de 180º (moneda plana)
+    const rotationInDegrees = (rotationData.rotation % (Math.PI * 2)) * (180 / Math.PI);
+    const isNearFlat = Math.abs(rotationInDegrees % 180) < 15; // 15 grados de tolerancia
+    
+    if (targetCoinIndex !== currentCoinIndex && isNearFlat && !isTransitioning && coins[targetCoinIndex]) {
+        startCoinTransition(targetCoinIndex);
     }
     
     // Manejar transición activa
     if (isTransitioning) {
-        transitionProgress += 0.08;
+        transitionProgress += 0.12; // Más rápido
         
         if (transitionProgress >= 1) {
             completeCoinTransition();
@@ -314,27 +315,63 @@ function startCoinTransition(newIndex) {
     
     // Preparar nueva moneda
     if (coins[newIndex]) {
-        coins[newIndex].position.copy(coins[currentCoinIndex].position);
-        coins[newIndex].rotation.y = coins[currentCoinIndex].rotation.y;
+        const currentCoin = coins[currentCoinIndex];
+        coins[newIndex].position.copy(currentCoin.position);
+        coins[newIndex].rotation.y = currentCoin.rotation.y;
         coins[newIndex].rotation.x = 0; // Empezar plana
-        coins[newIndex].rotation.z = coins[currentCoinIndex].rotation.z;
+        coins[newIndex].rotation.z = currentCoin.rotation.z;
         coins[newIndex].visible = true;
         
-        // Hacer invisible la moneda actual gradualmente
-        coins[newIndex].material.opacity = 0;
-        coins[newIndex].material.transparent = true;
+        // Configurar materiales para fade
+        if (coins[newIndex].material) {
+            coins[newIndex].material.transparent = true;
+            coins[newIndex].material.opacity = 0;
+        } else {
+            // Si es un grupo, aplicar a todos los materiales
+            coins[newIndex].traverse((child) => {
+                if (child.material) {
+                    child.material.transparent = true;
+                    child.material.opacity = 0;
+                }
+            });
+        }
+    }
+    
+    // Preparar moneda actual para fade out
+    const currentCoin = coins[currentCoinIndex];
+    if (currentCoin.material) {
+        currentCoin.material.transparent = true;
+    } else {
+        currentCoin.traverse((child) => {
+            if (child.material) {
+                child.material.transparent = true;
+            }
+        });
     }
 }
 
 function updateTransition() {
     const oldCoin = coins[currentCoinIndex];
-    const newCoinIndex = (currentCoinIndex + 1) % coins.length;
-    const newCoin = coins[newCoinIndex];
+    const targetIndex = Math.min(currentCoinIndex + 1, coins.length - 1);
+    const newCoin = coins[targetIndex];
     
     if (oldCoin && newCoin) {
+        // Función para aplicar opacidad a un objeto
+        const setOpacity = (obj, opacity) => {
+            if (obj.material) {
+                obj.material.opacity = opacity;
+            } else {
+                obj.traverse((child) => {
+                    if (child.material) {
+                        child.material.opacity = opacity;
+                    }
+                });
+            }
+        };
+        
         // Fade out old coin, fade in new coin
-        oldCoin.material.opacity = 1 - transitionProgress;
-        newCoin.material.opacity = transitionProgress;
+        setOpacity(oldCoin, 1 - transitionProgress);
+        setOpacity(newCoin, transitionProgress);
         
         // Sincronizar posiciones
         newCoin.position.copy(oldCoin.position);
@@ -345,21 +382,35 @@ function updateTransition() {
 
 function completeCoinTransition() {
     const oldCoin = coins[currentCoinIndex];
-    const newCoinIndex = (currentCoinIndex + 1) % coins.length;
-    const newCoin = coins[newCoinIndex];
+    const targetIndex = Math.min(currentCoinIndex + 1, coins.length - 1);
+    const newCoin = coins[targetIndex];
+    
+    // Función para resetear material
+    const resetMaterial = (obj, opacity) => {
+        if (obj.material) {
+            obj.material.opacity = opacity;
+            obj.material.transparent = opacity < 1;
+        } else {
+            obj.traverse((child) => {
+                if (child.material) {
+                    child.material.opacity = opacity;
+                    child.material.transparent = opacity < 1;
+                }
+            });
+        }
+    };
     
     // Finalizar transición
     if (oldCoin) {
         oldCoin.visible = false;
-        oldCoin.material.opacity = 1;
+        resetMaterial(oldCoin, 1);
     }
     
     if (newCoin) {
-        newCoin.material.opacity = 1;
-        newCoin.material.transparent = false;
+        resetMaterial(newCoin, 1);
     }
     
-    currentCoinIndex = newCoinIndex;
+    currentCoinIndex = targetIndex;
     isTransitioning = false;
     transitionProgress = 0;
     
@@ -370,7 +421,7 @@ function animate() {
     requestAnimationFrame(animate);
     
     const currentCoin = coins[currentCoinIndex];
-    if (currentCoin) {
+    if (currentCoin && currentCoin.visible) {
         // Suavizar el progreso del scroll con interpolación
         scrollProgress += (targetScrollProgress - scrollProgress) * 0.08;
         
@@ -384,7 +435,11 @@ function animate() {
         // ROTACIÓN VERTICAL: Basada en los subtítulos
         const rotationData = calculateCoinRotation();
         currentRotationTarget += (rotationData.rotation - currentRotationTarget) * 0.05;
-        currentCoin.rotation.x = currentRotationTarget;
+        
+        // Solo aplicar rotación X si no estamos en transición
+        if (!isTransitioning) {
+            currentCoin.rotation.x = currentRotationTarget;
+        }
         
         // POSICIÓN X: Fija en el centro
         currentCoin.position.x = 0;
@@ -397,12 +452,13 @@ function animate() {
         
         // Sincronizar moneda en transición si existe
         if (isTransitioning) {
-            const newCoinIndex = (currentCoinIndex + 1) % coins.length;
-            const newCoin = coins[newCoinIndex];
+            const targetIndex = Math.min(currentCoinIndex + 1, coins.length - 1);
+            const newCoin = coins[targetIndex];
             if (newCoin && newCoin.visible) {
-                newCoin.position.y = currentCoin.position.y;
+                newCoin.position.copy(currentCoin.position);
                 newCoin.rotation.y = currentCoin.rotation.y;
                 newCoin.rotation.z = currentCoin.rotation.z;
+                // La nueva moneda mantiene rotation.x = 0 durante la transición
             }
         }
     }
