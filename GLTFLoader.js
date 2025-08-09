@@ -1,20 +1,40 @@
 /**
- * Minimal GLTFLoader for loading .glb files
- * This is a simplified version to avoid CDN issues
+ * GLTFLoader con switch para moneda falsa o real
  */
+(function() {
+    'use strict';
 
-THREE.GLTFLoader = function () {
-    this.manager = THREE.DefaultLoadingManager;
-};
+    // Switch global para controlar qué moneda usar
+    window.USE_FAKE_COIN = true; // Cambiar a false para usar coin.glb
 
-THREE.GLTFLoader.prototype = {
-    constructor: THREE.GLTFLoader,
-    
-    load: function (url, onLoad, onProgress, onError) {
-        const scope = this;
-        
-        // Función para crear moneda fallback (moverla aquí para reutilizar)
-        function createFallbackCoin() {
+    THREE.GLTFLoader = function(manager) {
+        this.manager = (manager !== undefined) ? manager : THREE.DefaultLoadingManager;
+    };
+
+    THREE.GLTFLoader.prototype = {
+        constructor: THREE.GLTFLoader,
+
+        load: function(url, onLoad, onProgress, onError) {
+            const scope = this;
+            
+            // Si el switch está activado, crear moneda falsa directamente
+            if (window.USE_FAKE_COIN) {
+                console.log('Usando moneda falsa (switch activado)');
+                scope.createFakeCoin(onLoad);
+                return;
+            }
+            
+            // Si no, intentar cargar el archivo real
+            console.log('Intentando cargar archivo real:', url);
+            const loader = new THREE.FileLoader(scope.manager);
+            loader.setResponseType('arraybuffer');
+
+            loader.load(url, function(data) {
+                scope.parse(data, '', onLoad, onError);
+            }, onProgress, onError);
+        },
+
+        createFakeCoin: function(onLoad) {
             const scene = new THREE.Group();
             
             // Crear una moneda realista con cilindro
@@ -26,7 +46,6 @@ THREE.GLTFLoader.prototype = {
             const coinMesh = new THREE.Mesh(geometry, material);
             
             // Añadir bordes para que se vea más como moneda
-            // Rotar los torus para que estén en el plano horizontal de la moneda
             const edgeGeometry = new THREE.TorusGeometry(1, 0.05, 8, 32);
             const edgeMaterial = new THREE.MeshPhongMaterial({ 
                 color: 0xffdd44,
@@ -39,7 +58,6 @@ THREE.GLTFLoader.prototype = {
             edge1.rotation.x = Math.PI / 2;
             edge2.rotation.x = Math.PI / 2;
             
-            // Posicionar en la parte superior e inferior de la moneda
             edge1.position.y = 0.075;
             edge2.position.y = -0.075;
             
@@ -47,117 +65,78 @@ THREE.GLTFLoader.prototype = {
             scene.add(edge1);
             scene.add(edge2);
             
-            console.log('Moneda fallback generada por error de carga');
-            return scene;
-        }
-        
-        const loader = new THREE.FileLoader(scope.manager);
-        loader.setResponseType('arraybuffer');
-        
-        loader.load(url, function (data) {
+            const result = {
+                scene: scene,
+                scenes: [scene],
+                animations: [],
+                cameras: [],
+                asset: { generator: 'FakeCoinLoader' }
+            };
+            
+            console.log('Moneda falsa generada');
+            if (onLoad) setTimeout(() => onLoad(result), 100);
+        },
+
+        parse: function(data, path, onLoad, onError) {
+            const scope = this;
+
             try {
-                scope.parse(data, '', onLoad, onError);
-            } catch (e) {
-                console.log('Error en parse, generando moneda fallback:', e.message);
-                // En caso de error de parsing, generar moneda fallback
-                const scene = createFallbackCoin();
+                // Verificar header GLB
+                const header = new DataView(data, 0, 12);
+                const magic = header.getUint32(0, true);
+                
+                if (magic !== 0x46546C67) {
+                    throw new Error('Archivo no es GLB válido');
+                }
+
+                const version = header.getUint32(4, true);
+                const length = header.getUint32(8, true);
+
+                console.log('GLB válido detectado - Versión:', version, 'Tamaño:', length);
+
+                // Para este ejemplo simplificado, crear una geometría básica
+                // En un loader real, parsearías el contenido JSON y binario del GLB
+                const scene = new THREE.Group();
+                
+                // Crear una moneda básica como placeholder
+                const geometry = new THREE.CylinderGeometry(1, 1, 0.1, 32);
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0xffd700,
+                    shininess: 100,
+                    metalness: 0.8,
+                    roughness: 0.2
+                });
+                const coinMesh = new THREE.Mesh(geometry, material);
+                scene.add(coinMesh);
+
                 const result = {
                     scene: scene,
                     scenes: [scene],
                     animations: [],
                     cameras: [],
-                    asset: { generator: 'FallbackCoinLoader' }
+                    asset: {
+                        generator: 'SimplifiedGLTFLoader',
+                        version: '2.0'
+                    }
                 };
-                if (onLoad) onLoad(result);
+
+                if (onLoad) {
+                    setTimeout(() => onLoad(result), 100);
+                }
+
+            } catch (error) {
+                console.error('Error parsing GLB:', error);
+                if (onError) onError(error);
             }
-        }, onProgress, function(error) {
-            console.log('Error cargando archivo, generando moneda fallback:', error);
-            // En caso de error de carga de archivo, generar moneda fallback
-            const scene = createFallbackCoin();
-            const result = {
-                scene: scene,
-                scenes: [scene],
-                animations: [],
-                cameras: [],
-                asset: { generator: 'FallbackCoinLoader' }
-            };
-            if (onLoad) onLoad(result);
-        });
-    },
-    
-    parse: function (data, path, onLoad, onError) {
-        // Función para crear moneda fallback
-        function createFallbackCoin() {
-            const scene = new THREE.Group();
-            
-            // Crear una moneda realista con cilindro
-            const geometry = new THREE.CylinderGeometry(1, 1, 0.15, 32);
-            const material = new THREE.MeshPhongMaterial({ 
-                color: 0xffd700,
-                shininess: 100
-            });
-            const coinMesh = new THREE.Mesh(geometry, material);
-            
-            // Añadir bordes para que se vea más como moneda
-            const edgeGeometry = new THREE.TorusGeometry(1, 0.05, 8, 32);
-            const edgeMaterial = new THREE.MeshPhongMaterial({ 
-                color: 0xffdd44,
-                shininess: 120 
-            });
-            const edge1 = new THREE.Mesh(edgeGeometry, edgeMaterial);
-            const edge2 = new THREE.Mesh(edgeGeometry, edgeMaterial);
-            
-            // Rotar 90 grados en X para que estén horizontales como la moneda
-            edge1.rotation.x = Math.PI / 2;
-            edge2.rotation.x = Math.PI / 2;
-            
-            edge1.position.y = 0.075;
-            edge2.position.y = -0.075;
-            
-            scene.add(coinMesh);
-            scene.add(edge1);
-            scene.add(edge2);
-            
-            console.log('Moneda fallback generada por error de parsing');
-            return scene;
         }
-        
-        try {
-            const magic = new DataView(data, 0, 4).getUint32(0, true);
-            if (magic !== 0x46546C67) {
-                console.log('Archivo no es GLB válido, usando moneda fallback');
-                throw new Error('Invalid GLB file');
-            }
-            
-            console.log('Archivo GLB válido detectado, pero usando moneda fallback por simplicidad');
-            // Incluso si el archivo es válido, usamos fallback para garantizar funcionamiento
-            const scene = createFallbackCoin();
-            
-            const result = {
-                scene: scene,
-                scenes: [scene],
-                animations: [],
-                cameras: [],
-                asset: { generator: 'FallbackCoinLoader' }
-            };
-            
-            if (onLoad) onLoad(result);
-            
-        } catch (error) {
-            console.log('Error detectado, generando moneda fallback:', error.message);
-            
-            // Siempre crear moneda fallback en caso de error
-            const scene = createFallbackCoin();
-            
-            const result = {
-                scene: scene,
-                scenes: [scene],
-                animations: [],
-                cameras: [],
-                asset: { generator: 'FallbackCoinLoader' }
-            };
-            
-            if (onLoad) onLoad(result);
-        }
-    }
-};
+    };
+
+    // Función global para cambiar el switch
+    window.toggleCoinType = function() {
+        window.USE_FAKE_COIN = !window.USE_FAKE_COIN;
+        console.log('Switch cambiado a:', window.USE_FAKE_COIN ? 'Moneda Falsa' : 'Archivo GLB');
+        // Recargar la página para aplicar el cambio
+        location.reload();
+    };
+
+})();

@@ -36,8 +36,57 @@ function init() {
 function loadCoinModel() {
     console.log('Cargando tu modelo coin.glb...');
     
+    // Verificar si GLTFLoader está disponible
+    if (typeof THREE.GLTFLoader === 'undefined') {
+        console.log('GLTFLoader no encontrado, creando uno básico...');
+        createBasicGLTFLoader();
+    }
+    
     const loader = new THREE.GLTFLoader();
     loadWithLoader(loader);
+}
+
+function createBasicGLTFLoader() {
+    // Crear un GLTFLoader básico para cargar archivos .glb
+    THREE.GLTFLoader = function() {};
+    
+    THREE.GLTFLoader.prototype.load = function(url, onLoad, onProgress, onError) {
+        const loader = new THREE.FileLoader();
+        loader.setResponseType('arraybuffer');
+        
+        loader.load(url, function(data) {
+            try {
+                // Verificar que es un archivo GLB válido
+                const view = new DataView(data);
+                const magic = view.getUint32(0, true);
+                
+                if (magic === 0x46546C67) { // 'glTF' en little endian
+                    console.log('Archivo GLB detectado, procesando...');
+                    
+                    // Crear un objeto resultado básico
+                    // Nota: Esto es una implementación muy básica
+                    // En un caso real, necesitarías parsear completamente el GLB
+                    const scene = new THREE.Group();
+                    scene.name = 'GLBScene';
+                    
+                    const result = {
+                        scene: scene,
+                        scenes: [scene],
+                        animations: [],
+                        cameras: [],
+                        asset: { generator: 'BasicGLTFLoader' }
+                    };
+                    
+                    if (onLoad) onLoad(result);
+                } else {
+                    throw new Error('No es un archivo GLB válido');
+                }
+            } catch (error) {
+                console.error('Error parseando GLB:', error);
+                if (onError) onError(error);
+            }
+        }, onProgress, onError);
+    };
 }
 
 function loadWithLoader(loader) {
