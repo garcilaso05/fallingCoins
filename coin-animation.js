@@ -160,21 +160,18 @@ function getCurrentCoinAndRotation(scrollTop) {
             // POSICIÓN Y SUAVE: Evitar salto inicial
             let coinY;
             if (range.coinIndex === 0 && scrollTop < range.startPixel + 100) {
-                // Para la primera moneda, mantener posición inicial hasta que empecemos a scrollear
                 const transitionProgress = Math.min(1, (scrollTop - range.startPixel + 100) / 200);
-                const initialY = 0; // Posición inicial centrada
+                const initialY = 0;
                 const targetY = 2 - (scrollTop / (document.documentElement.scrollHeight - window.innerHeight)) * 4;
                 coinY = initialY + (targetY - initialY) * Math.max(0, transitionProgress);
             } else {
-                // Posición Y normal para el resto
                 const totalScrollPercent = scrollTop / (document.documentElement.scrollHeight - window.innerHeight);
                 coinY = 2 - (totalScrollPercent * 4);
             }
             
-            // Detectar proximidad al punto de cambio (subtítulo)
-            const distanceToEnd = range.endPixel - scrollTop;
-            const isNearSubtitle = distanceToEnd < 50; // 50px de margen
-            const isAtSubtitle = Math.abs(scrollTop - range.endPixel) < 10; // Muy cerca del subtítulo
+            // DETECCIÓN EXACTA A 180°: Cambio precisamente cuando currentAngle = Math.PI
+            const isExactlyAtEdge = Math.abs(currentAngle - Math.PI) < 0.005; // Tolerancia mínima
+            const isVeryCloseToEdge = Math.abs(currentAngle - Math.PI) < 0.02; // Para precarga
             
             const nextCoinIndex = range.coinIndex + 1;
             const hasNextCoin = nextCoinIndex < coins.length && nextCoinIndex < rotationRanges.length;
@@ -185,10 +182,11 @@ function getCurrentCoinAndRotation(scrollTop) {
                 rotation: currentAngle,
                 positionY: coinY,
                 progress: clampedProgress,
-                shouldChangeCoin: isAtSubtitle && hasNextCoin,
-                isNearSubtitle: isNearSubtitle && hasNextCoin,
+                shouldChangeCoin: isExactlyAtEdge && hasNextCoin,
+                isNearSubtitle: isVeryCloseToEdge && hasNextCoin,
                 correctCoinIndex: range.coinIndex,
-                exactScrollPosition: scrollTop
+                exactScrollPosition: scrollTop,
+                currentAngleInDegrees: (currentAngle * 180 / Math.PI).toFixed(1) // Para debug
             };
         }
     }
@@ -398,7 +396,6 @@ function animate() {
     if (coinState.correctCoinIndex !== currentCoinIndex && coins[coinState.correctCoinIndex]) {
         console.log(`🔄 Corrección automática: scroll rápido detectado`);
         
-        // Cambio inmediato sin animación para correcciones
         coins.forEach((coin, index) => {
             if (coin) coin.visible = false;
         });
@@ -413,72 +410,66 @@ function animate() {
         }
     }
     
-    // PRECARGAR PRÓXIMA MONEDA cuando estemos cerca del subtítulo
+    // PRECARGAR cuando estemos muy cerca de 180°
     else if (coinState.isNearSubtitle && coins[coinState.nextCoinIndex]) {
         const currentCoin = coins[currentCoinIndex];
         const nextCoin = coins[coinState.nextCoinIndex];
         
         if (currentCoin && nextCoin) {
-            // Precargar la siguiente moneda en la MISMA posición exacta
+            // Sincronizar posición exacta
             nextCoin.position.copy(currentCoin.position);
             nextCoin.rotation.y = currentCoin.rotation.y;
-            nextCoin.rotation.x = currentCoin.rotation.x; // Mismo ángulo exacto
+            nextCoin.rotation.x = Math.PI; // Preparar de canto
             nextCoin.rotation.z = currentCoin.rotation.z;
-            // No la hacemos visible aún
         }
     }
     
-    // CAMBIO INSTANTÁNEO cuando llegamos al subtítulo
+    // CAMBIO INSTANTÁNEO exactamente a 180°
     else if (coinState.shouldChangeCoin && coinState.nextCoinIndex !== currentCoinIndex) {
         
-        console.log(`→ Cambio instantáneo en subtítulo: ${currentCoinIndex + 1} → ${coinState.nextCoinIndex + 1}`);
+        console.log(`→ Cambio EXACTO a ${coinState.currentAngleInDegrees}°: moneda ${currentCoinIndex + 1} → ${coinState.nextCoinIndex + 1}`);
         
         const currentCoin = coins[currentCoinIndex];
         const nextCoin = coins[coinState.nextCoinIndex];
         
         if (currentCoin && nextCoin) {
-            // Capturar posición y rotación exactas de la moneda actual
+            // Capturar estado exacto
             const exactPosition = currentCoin.position.clone();
             const exactRotationY = currentCoin.rotation.y;
             const exactRotationZ = currentCoin.rotation.z;
             
-            // Ocultar moneda actual
+            // Cambio atómico - ambas monedas en mismo frame
             currentCoin.visible = false;
             
-            // Mostrar nueva moneda en la MISMA posición exacta
             nextCoin.position.copy(exactPosition);
             nextCoin.rotation.y = exactRotationY;
-            nextCoin.rotation.x = Math.PI; // De canto en el subtítulo
+            nextCoin.rotation.x = Math.PI; // Exactamente de canto
             nextCoin.rotation.z = exactRotationZ;
             nextCoin.visible = true;
             
-            // Cambiar índice
             currentCoinIndex = coinState.nextCoinIndex;
         }
     }
     
-    // Asegurar que solo la moneda actual esté visible
+    // Asegurar exclusividad de visibilidad
     coins.forEach((coin, index) => {
-        if (coin && index !== currentCoinIndex) {
-            coin.visible = false;
+        if (coin) {
+            coin.visible = index === currentCoinIndex;
         }
     });
     
     const currentCoin = coins[currentCoinIndex];
     if (!currentCoin) return;
     
-    // Asegurar visibilidad
-    currentCoin.visible = true;
-    
-    // Aplicar transformaciones suaves SOLO a la moneda activa
+    // Aplicar transformaciones fluidas
     currentCoin.position.y = coinState.positionY;
     currentCoin.position.x = 0;
     currentCoin.position.z = 0;
     
-    // Rotaciones continuas
-    currentCoin.rotation.y += 0.02; // Horizontal continua
-    currentCoin.rotation.x = coinState.rotation; // Vertical basada en posición
-    currentCoin.rotation.z = Math.sin(Date.now() * 0.001) * 0.05; // Variación sutil
+    // Rotaciones
+    currentCoin.rotation.y += 0.02;
+    currentCoin.rotation.x = coinState.rotation;
+    currentCoin.rotation.z = Math.sin(Date.now() * 0.001) * 0.05;
     
     renderer.render(scene, camera);
 }
