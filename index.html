@@ -15,7 +15,7 @@
             font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             color: white;
-            line-height: 1.6;
+            line-height: 1.8;
         }
         
         .container {
@@ -25,31 +25,36 @@
         
         .content {
             flex: 1;
-            padding: 40px;
+            padding: 60px 80px;
             max-width: 60%;
             z-index: 10;
             position: relative;
         }
         
         .content h1 {
-            font-size: 3rem;
-            margin-bottom: 30px;
+            font-size: 5rem;
+            margin-bottom: 80px;
+            margin-top: 40px;
             background: linear-gradient(45deg, #ffd700, #ffed4e);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            font-weight: bold;
+            line-height: 1.2;
         }
         
         .content h2 {
-            font-size: 2rem;
-            margin: 40px 0 20px 0;
+            font-size: 2.5rem;
+            margin: 150px 0 50px 0;
             color: #ffd700;
+            font-weight: bold;
         }
         
         .content p {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
+            font-size: 1.3rem;
+            margin-bottom: 30px;
             text-align: justify;
+            line-height: 1.8;
         }
         
         .coin-container {
@@ -63,72 +68,67 @@
         }
         
         .spacer {
-            height: 200vh;
+            height: 300vh;
         }
         
         .highlight-box {
             background: rgba(255, 215, 0, 0.1);
             border-left: 4px solid #ffd700;
-            padding: 20px;
-            margin: 30px 0;
-            border-radius: 5px;
+            padding: 30px;
+            margin: 50px 0;
+            border-radius: 8px;
+        }
+        
+        .section {
+            margin-bottom: 200px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="content">
-            <h1>Moneda Digital Cayendo</h1>
+            <h1>Moneda Digital Interactiva</h1>
             
-            <p>Bienvenido a una experiencia única donde una moneda digital te acompaña mientras exploras el contenido. La moneda responde fluidamente a tu navegación, creando una sensación inmersiva y satisfactoria.</p>
-            
-            <h2>¿Cómo Funciona?</h2>
-            <p>Utilizando tecnología WebGL y Three.js, hemos creado una moneda 3D que reacciona en tiempo real al movimiento de scroll de la página. Cada movimiento es calculado para proporcionar una experiencia visual fluida y realista.</p>
-            
-            <div class="highlight-box">
-                <p><strong>Características principales:</strong></p>
-                <ul>Modificar la animación para que responda al scroll:
+            <div class="section">
+                <p>Bienvenido a una experiencia única donde una moneda digital te acompaña mientras exploras el contenido. La moneda responde fluidamente a tu navegación, creando una sensación inmersiva y satisfactoria.</p>
                 
-                
-                    <li>Animación sincronizada con el scroll</li>
-                    <li>Rotación realista de la moneda</li>
-                    <li>Efectos de iluminación dinámicos</li>
-                    <li>Respuesta fluida al movimiento</li>
-                </ul>
+                <p>Cada movimiento está cuidadosamente calculado para proporcionar una experiencia visual fluida y realista que reacciona perfectamente a tu scroll.</p>
             </div>
             
-            <h2>Tecnología Detrás de la Magia</h2>
-            <p>Esta experiencia está construida con las últimas tecnologías web. Three.js proporciona el motor de renderizado 3D, mientras que JavaScript maneja la sincronización entre el scroll y la animación de la moneda.</p>
-            
-            <p>La moneda está diseñada para seguir principios físicos realistas. Cuando te desplazas hacia abajo, la moneda cae con una aceleración natural. Cuando subes, la moneda sube suavemente, manteniendo siempre una rotación característica que simula una moneda real cayendo por el aire.</p>
-            
-            <h2>Detalles de la Implementación</h2>
-            <p>El sistema utiliza interpolación suave para evitar movimientos bruscos. Cada frame de animación calcula la posición ideal de la moneda basándose en la posición actual del scroll, aplicando una función de suavizado que hace que los movimientos se sientan naturales y orgánicos.</p>
-            
-            <p>Los efectos de iluminación están cuidadosamente calibrados para resaltar los detalles de la moneda y crear reflejos realistas que cambian sutilmente durante la rotación.</p>
-            
-            <h2>Optimización y Rendimiento</h2>
-            <p>La aplicación está optimizada para mantener 60 FPS incluso en dispositivos menos potentes. Utilizamos técnicas como culling de objetos fuera de pantalla y LOD (Level of Detail) para asegurar una experiencia fluida.</p>
-            
-            <div class="highlight-box">
-                <p><strong>Consejos para la mejor experiencia:</strong></p>
-                <ul>
-                    <li>Usa un navegador moderno (Chrome, Firefox, Safari)</li>
-                    <li>Asegúrate de tener aceleración por hardware habilitada</li>
-                    <li>Desplázate lentamente para apreciar mejor la animación</li>
-                    <li>Prueba tanto con el mouse como con gestos táctiles</li>
-                </ul>
+            <div class="section">
+                <h2>Tecnología Avanzada</h2>
+                <p>Utilizando tecnología WebGL y Three.js de última generación, hemos creado una moneda 3D que reacciona en tiempo real al movimiento de scroll de la página. Cada frame es renderizado con precisión para mantener 60 FPS constantes.</p>
+                
+                <p>La moneda está diseñada para seguir principios físicos realistas. Cuando te desplazas hacia abajo, la moneda gira exactamente 180 grados hasta mostrar su cara opuesta, creando una transición perfecta entre diferentes diseños.</p>
             </div>
             
-            <h2>Futuras Mejoras</h2>
-            <p>Estamos trabajando en nuevas características como partículas que sigan a la moneda, efectos de sonido sincronizados, y la posibilidad de cambiar entre diferentes tipos de monedas con animaciones únicas.</p>
+            <div class="section">
+                <h2>Experiencia Inmersiva</h2>
+                <p>El sistema utiliza interpolación suave para evitar movimientos bruscos. Cada frame de animación calcula la posición ideal de la moneda basándose en la posición actual del scroll, aplicando una función de suavizado que hace que los movimientos se sientan naturales y orgánicos.</p>
+                
+                <p>Los efectos de iluminación están cuidadosamente calibrados para resaltar los detalles de cada moneda y crear reflejos realistas que cambian sutilmente durante la rotación, proporcionando una sensación de profundidad y materialidad.</p>
+            </div>
             
-            <p>También planeamos añadir opciones de personalización que permitan a los usuarios ajustar la velocidad de la animación, los colores de la iluminación, y otros aspectos visuales según sus preferencias.</p>
+            <div class="section">
+                <h2>Optimización Premium</h2>
+                <p>La aplicación está optimizada para mantener rendimiento óptimo incluso en dispositivos menos potentes. Utilizamos técnicas avanzadas como culling inteligente, LOD dinámico y gestión eficiente de memoria para asegurar una experiencia fluida.</p>
+                
+                <p>Cada moneda se precarga y almacena en memoria para eliminar cualquier retraso durante las transiciones, garantizando que la experiencia sea completamente fluida sin importar la velocidad de navegación.</p>
+            </div>
             
-            <h2>Conclusión</h2>
-            <p>Esta demostración representa la convergencia entre diseño web moderno y tecnología 3D. Es un ejemplo de cómo las experiencias web pueden ser tanto funcionales como visualmente cautivadoras.</p>
+            <div class="section">
+                <h2>Diseño Profesional</h2>
+                <p>Cada elemento visual ha sido diseñado con atención al detalle. Los materiales, texturas y iluminación trabajan en conjunto para crear una experiencia premium que demuestra las posibilidades del diseño web moderno.</p>
+                
+                <p>La sincronización perfecta entre contenido y animación crea una narrativa visual cohesiva que mantiene al usuario comprometido y proporciona valor tanto estético como funcional.</p>
+            </div>
             
-            <p>Continúa navegando para ver cómo la moneda te acompaña en tu viaje por el contenido. ¡Disfruta de la experiencia!</p>
+            <div class="section">
+                <h2>Innovación Continua</h2>
+                <p>Esta demostración representa la convergencia entre diseño web moderno y tecnología 3D de vanguardia. Es un ejemplo de cómo las experiencias web pueden ser tanto funcionales como visualmente extraordinarias.</p>
+                
+                <p>Continúa navegando para experimentar cómo cada moneda revela su diseño único mientras acompaña tu viaje por el contenido. Cada transición ha sido calibrada para proporcionar máxima satisfacción visual.</p>
+            </div>
             
             <div class="spacer"></div>
         </div>
