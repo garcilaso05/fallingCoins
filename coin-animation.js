@@ -157,24 +157,28 @@ function getCurrentCoinAndRotation(scrollTop) {
             const angleDiff = range.endAngle - range.startAngle;
             const currentAngle = range.startAngle + (angleDiff * clampedProgress);
             
-            // Posición Y controlada - nunca sale de pantalla
-            const coinY = Math.max(-2, Math.min(2, -1 + (clampedProgress * 0.5)));
+            // Posición Y más suave y continua
+            const totalScrollPercent = scrollTop / (document.documentElement.scrollHeight - window.innerHeight);
+            const coinY = 2 - (totalScrollPercent * 4); // Movimiento más lineal
             
-            // CAMBIO EXACTO: Solo cuando llegamos exactamente a 180° (Math.PI)
-            const isAtEdge = Math.abs(currentAngle - Math.PI) < 0.01; // Tolerancia muy pequeña
+            // Detectar proximidad al punto de cambio (subtítulo)
+            const distanceToEnd = range.endPixel - scrollTop;
+            const isNearSubtitle = distanceToEnd < 50; // 50px de margen
+            const isAtSubtitle = Math.abs(scrollTop - range.endPixel) < 10; // Muy cerca del subtítulo
+            
             const nextCoinIndex = range.coinIndex + 1;
-            const shouldChangeCoin = isAtEdge && nextCoinIndex < coins.length && 
-                                   nextCoinIndex < rotationRanges.length;
+            const hasNextCoin = nextCoinIndex < coins.length && nextCoinIndex < rotationRanges.length;
             
             return {
                 coinIndex: range.coinIndex,
-                nextCoinIndex: shouldChangeCoin ? nextCoinIndex : range.coinIndex,
+                nextCoinIndex: hasNextCoin ? nextCoinIndex : range.coinIndex,
                 rotation: currentAngle,
                 positionY: coinY,
                 progress: clampedProgress,
-                shouldChangeCoin: shouldChangeCoin,
-                isAtEdge: isAtEdge,
-                correctCoinIndex: range.coinIndex
+                shouldChangeCoin: isAtSubtitle && hasNextCoin,
+                isNearSubtitle: isNearSubtitle && hasNextCoin,
+                correctCoinIndex: range.coinIndex,
+                exactScrollPosition: scrollTop
             };
         }
     }
@@ -361,63 +365,81 @@ function animate() {
     
     // VERIFICACIÓN CONTINUA: Asegurar que tenemos la moneda correcta para la posición actual
     if (coinState.correctCoinIndex !== currentCoinIndex && coins[coinState.correctCoinIndex]) {
-        console.log(`🔄 Corrección automática: scroll rápido detectado, cambiando de moneda ${currentCoinIndex + 1} a ${coinState.correctCoinIndex + 1}`);
+        console.log(`🔄 Corrección automática: scroll rápido detectado`);
         
-        // Ocultar moneda incorrecta
-        if (coins[currentCoinIndex]) {
-            coins[currentCoinIndex].visible = false;
-        }
+        // Cambio inmediato sin animación para correcciones
+        coins.forEach((coin, index) => {
+            if (coin) coin.visible = false;
+        });
         
-        // Activar moneda correcta
         currentCoinIndex = coinState.correctCoinIndex;
         const correctCoin = coins[currentCoinIndex];
         
         if (correctCoin) {
-            correctCoin.position.y = coinState.positionY;
-            correctCoin.position.x = 0;
-            correctCoin.position.z = 0;
+            correctCoin.position.set(0, coinState.positionY, 0);
             correctCoin.rotation.x = coinState.rotation;
             correctCoin.visible = true;
         }
     }
     
-    // TRANSICIÓN PERFECTA: Solo cuando estamos exactamente de canto (180°)
-    else if (coinState.shouldChangeCoin && coinState.isAtEdge && coinState.nextCoinIndex !== currentCoinIndex) {
-        
-        console.log(`→ Cambio exacto a 180°: moneda ${currentCoinIndex + 1} → ${coinState.nextCoinIndex + 1}`);
-        
-        // Ocultar moneda actual (está exactamente de canto)
-        if (coins[currentCoinIndex]) {
-            coins[currentCoinIndex].visible = false;
-        }
-        
-        // Mostrar nueva moneda también de canto (180°) para continuidad visual
+    // PRECARGAR PRÓXIMA MONEDA cuando estemos cerca del subtítulo
+    else if (coinState.isNearSubtitle && coins[coinState.nextCoinIndex]) {
+        const currentCoin = coins[currentCoinIndex];
         const nextCoin = coins[coinState.nextCoinIndex];
-        if (nextCoin) {
-            nextCoin.position.y = coinState.positionY;
-            nextCoin.position.x = 0;
-            nextCoin.position.z = 0;
-            nextCoin.rotation.y = coins[currentCoinIndex] ? coins[currentCoinIndex].rotation.y : 0;
-            nextCoin.rotation.x = Math.PI; // Empezar exactamente de canto
-            nextCoin.rotation.z = 0;
-            nextCoin.visible = true;
-        }
         
-        // Cambiar inmediatamente el índice activo
-        currentCoinIndex = coinState.nextCoinIndex;
+        if (currentCoin && nextCoin) {
+            // Precargar la siguiente moneda en la MISMA posición exacta
+            nextCoin.position.copy(currentCoin.position);
+            nextCoin.rotation.y = currentCoin.rotation.y;
+            nextCoin.rotation.x = currentCoin.rotation.x; // Mismo ángulo exacto
+            nextCoin.rotation.z = currentCoin.rotation.z;
+            // No la hacemos visible aún
+        }
+    }
+    
+    // CAMBIO INSTANTÁNEO cuando llegamos al subtítulo
+    else if (coinState.shouldChangeCoin && coinState.nextCoinIndex !== currentCoinIndex) {
+        
+        console.log(`→ Cambio instantáneo en subtítulo: ${currentCoinIndex + 1} → ${coinState.nextCoinIndex + 1}`);
+        
+        const currentCoin = coins[currentCoinIndex];
+        const nextCoin = coins[coinState.nextCoinIndex];
+        
+        if (currentCoin && nextCoin) {
+            // Capturar posición y rotación exactas de la moneda actual
+            const exactPosition = currentCoin.position.clone();
+            const exactRotationY = currentCoin.rotation.y;
+            const exactRotationZ = currentCoin.rotation.z;
+            
+            // Ocultar moneda actual
+            currentCoin.visible = false;
+            
+            // Mostrar nueva moneda en la MISMA posición exacta
+            nextCoin.position.copy(exactPosition);
+            nextCoin.rotation.y = exactRotationY;
+            nextCoin.rotation.x = Math.PI; // De canto en el subtítulo
+            nextCoin.rotation.z = exactRotationZ;
+            nextCoin.visible = true;
+            
+            // Cambiar índice
+            currentCoinIndex = coinState.nextCoinIndex;
+        }
     }
     
     // Asegurar que solo la moneda actual esté visible
     coins.forEach((coin, index) => {
-        if (coin) {
-            coin.visible = index === currentCoinIndex;
+        if (coin && index !== currentCoinIndex) {
+            coin.visible = false;
         }
     });
     
     const currentCoin = coins[currentCoinIndex];
     if (!currentCoin) return;
     
-    // Aplicar transformaciones suaves sin interrupciones
+    // Asegurar visibilidad
+    currentCoin.visible = true;
+    
+    // Aplicar transformaciones suaves SOLO a la moneda activa
     currentCoin.position.y = coinState.positionY;
     currentCoin.position.x = 0;
     currentCoin.position.z = 0;
