@@ -169,24 +169,33 @@ function getCurrentCoinAndRotation(scrollTop) {
                 coinY = 2 - (totalScrollPercent * 4);
             }
             
-            // BLOQUEO EXACTO EN SUBTÍTULO: 180° y Y del final de rango en una ventana de 2px
-            const lockWindowPx = 2; // ventana mínima para clavar el cambio
-            const distancePx = scrollTop - range.endPixel; // + si pasamos, - si falta
-            const absDistance = Math.abs(distancePx);
-            const yAtEnd = 2 - ((range.endPixel / (document.documentElement.scrollHeight - window.innerHeight)) * 4);
-            const isLockZone = absDistance <= lockWindowPx;
-
-            if (isLockZone) {
-                currentAngle = Math.PI;      // exactamente de canto
-                coinY = yAtEnd;              // exactamente en la Y del final de rango
+            // CONTROL ESPECÍFICO PARA LA PRIMERA MONEDA - BLOQUEO PERFECTO
+            const distanceToSubtitle = Math.abs(scrollTop - range.endPixel);
+            const isVeryCloseToSubtitle = distanceToSubtitle < 2; // Ventana de 2px
+            
+            // Para la primera moneda, ser más estricto con el bloqueo
+            if (range.coinIndex === 0 && isVeryCloseToSubtitle) {
+                currentAngle = Math.PI; // Forzar exactamente 180°
+                // Forzar la posición Y exacta del final del rango
+                const endScrollPercent = range.endPixel / (document.documentElement.scrollHeight - window.innerHeight);
+                coinY = 2 - (endScrollPercent * 4);
             }
-
+            
             const nextCoinIndex = range.coinIndex + 1;
             const hasNextCoin = nextCoinIndex < coins.length && nextCoinIndex < rotationRanges.length;
-
-            // Cambiar solo dentro de la ventana de bloqueo
-            const shouldChangeCoin = isLockZone && hasNextCoin;
-
+            
+            // Condiciones de cambio más precisas para la primera moneda
+            let shouldChangeCoin;
+            if (range.coinIndex === 0) {
+                // Para la primera moneda: debe estar exactamente en el subtítulo
+                shouldChangeCoin = isVeryCloseToSubtitle && hasNextCoin;
+            } else {
+                // Para el resto: lógica normal
+                const isAtSubtitle = distanceToSubtitle < 5;
+                const isAt180Degrees = Math.abs(currentAngle - Math.PI) < 0.1;
+                shouldChangeCoin = isAtSubtitle && isAt180Degrees && hasNextCoin;
+            }
+            
             return {
                 coinIndex: range.coinIndex,
                 nextCoinIndex: hasNextCoin ? nextCoinIndex : range.coinIndex,
@@ -194,12 +203,11 @@ function getCurrentCoinAndRotation(scrollTop) {
                 positionY: coinY,
                 progress: clampedProgress,
                 shouldChangeCoin: shouldChangeCoin,
-                isNearSubtitle: (absDistance < 30) && hasNextCoin, // precarga cerca
-                isLockZone,                                        // para animación
+                isNearSubtitle: distanceToSubtitle < 30 && hasNextCoin,
                 correctCoinIndex: range.coinIndex,
                 exactScrollPosition: scrollTop,
                 currentAngleInDegrees: (currentAngle * 180 / Math.PI).toFixed(1),
-                distanceToSubtitle: absDistance.toFixed(1)
+                distanceToSubtitle: distanceToSubtitle.toFixed(1) // Para debug
             };
         }
     }
@@ -423,20 +431,21 @@ function animate() {
         }
     }
     
-    // PRECARGAR cuando estemos muy cerca o dentro de la ventana de bloqueo
-    else if ((coinState.isNearSubtitle || coinState.isLockZone) && coins[coinState.nextCoinIndex]) {
+    // PRECARGAR cuando estemos cerca del subtítulo
+    else if (coinState.isNearSubtitle && coins[coinState.nextCoinIndex]) {
         const currentCoin = coins[currentCoinIndex];
         const nextCoin = coins[coinState.nextCoinIndex];
         
         if (currentCoin && nextCoin) {
+            // Sincronizar posición exacta
             nextCoin.position.copy(currentCoin.position);
             nextCoin.rotation.y = currentCoin.rotation.y;
-            nextCoin.rotation.x = Math.PI; // preparada de canto
+            nextCoin.rotation.x = Math.PI; // Preparar de canto
             nextCoin.rotation.z = currentCoin.rotation.z;
         }
     }
     
-    // CAMBIO EXACTO solo dentro de la ventana de bloqueo (180° y Y clavadas)
+    // CAMBIO SOLO EN EL SUBTÍTULO
     else if (coinState.shouldChangeCoin && coinState.nextCoinIndex !== currentCoinIndex) {
         
         console.log(`→ Cambio EN SUBTÍTULO a ${coinState.currentAngleInDegrees}° (distancia: ${coinState.distanceToSubtitle}px): moneda ${currentCoinIndex + 1} → ${coinState.nextCoinIndex + 1}`);
@@ -445,19 +454,20 @@ function animate() {
         const nextCoin = coins[coinState.nextCoinIndex];
         
         if (currentCoin && nextCoin) {
+            // Capturar estado exacto
             const exactPosition = currentCoin.position.clone();
             const exactRotationY = currentCoin.rotation.y;
             const exactRotationZ = currentCoin.rotation.z;
-
-            currentCoin.rotation.x = Math.PI; // asegurar canto antes de ocultar
+            
+            // Cambio atómico
             currentCoin.visible = false;
-
+            
             nextCoin.position.copy(exactPosition);
             nextCoin.rotation.y = exactRotationY;
-            nextCoin.rotation.x = Math.PI; // exactamente de canto
+            nextCoin.rotation.x = Math.PI; // Empezar de canto
             nextCoin.rotation.z = exactRotationZ;
             nextCoin.visible = true;
-
+            
             currentCoinIndex = coinState.nextCoinIndex;
         }
     }
