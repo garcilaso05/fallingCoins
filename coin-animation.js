@@ -79,13 +79,13 @@ function calculateRotationRanges() {
     
     rotationRanges = [];
     
-    // Calcular posición del título (inicio en 0°)
+    // Calcular posición del título (centro = 90° para moneda 1)
     const titleRect = title.getBoundingClientRect();
     const titleCenter = titleRect.top + window.pageYOffset + (titleRect.height / 2);
     
     console.log(`Título centrado en: ${titleCenter}px`);
     
-    // Primera moneda: desde 0° (título) hasta 180° (primer subtítulo)
+    // Primera moneda especial: desde 90° (título) hasta 180° (primer subtítulo)
     if (subtitles.length > 0) {
         const firstSubtitleRect = subtitles[0].getBoundingClientRect();
         const firstSubtitleCenter = firstSubtitleRect.top + window.pageYOffset + (firstSubtitleRect.height / 2);
@@ -94,15 +94,15 @@ function calculateRotationRanges() {
             coinIndex: 0,
             startPixel: titleCenter,
             endPixel: firstSubtitleCenter,
-            startAngle: 0, // 0°
-            endAngle: Math.PI, // 180°
+            startAngle: Math.PI / 2, // 90° - muestra la cara
+            endAngle: Math.PI, // 180° - de canto
             direction: 'forward'
         });
         
-        console.log(`Moneda 1: ${titleCenter}px (0°) → ${firstSubtitleCenter}px (180°)`);
+        console.log(`Moneda 1: ${titleCenter}px (90°) → ${firstSubtitleCenter}px (180°)`);
     }
     
-    // Resto de monedas: alternar entre 180°→360° y 0°→180°
+    // Sistema de alternancia: cada moneda de 0° a 180° consecutivamente
     for (let i = 0; i < subtitles.length - 1; i++) {
         const currentSubtitleRect = subtitles[i].getBoundingClientRect();
         const nextSubtitleRect = subtitles[i + 1].getBoundingClientRect();
@@ -110,19 +110,16 @@ function calculateRotationRanges() {
         const currentCenter = currentSubtitleRect.top + window.pageYOffset + (currentSubtitleRect.height / 2);
         const nextCenter = nextSubtitleRect.top + window.pageYOffset + (nextSubtitleRect.height / 2);
         
-        // Alternar: par = 180°→360°, impar = 0°→180°
-        const isEven = i % 2 === 0;
-        
         rotationRanges.push({
             coinIndex: i + 1,
             startPixel: currentCenter,
             endPixel: nextCenter,
-            startAngle: isEven ? Math.PI : 0, // 180° o 0°
-            endAngle: isEven ? Math.PI * 2 : Math.PI, // 360° o 180°
+            startAngle: 0, // Siempre empieza mostrando la cara
+            endAngle: Math.PI, // Termina de canto
             direction: 'forward'
         });
         
-        console.log(`Moneda ${i + 2}: ${currentCenter}px (${isEven ? '180°' : '0°'}) → ${nextCenter}px (${isEven ? '360°' : '180°'})`);
+        console.log(`Moneda ${i + 2}: ${currentCenter}px (0°) → ${nextCenter}px (180°)`);
     }
     
     // Última moneda: desde último subtítulo hasta el final
@@ -131,18 +128,16 @@ function calculateRotationRanges() {
         const lastCenter = lastSubtitleRect.top + window.pageYOffset + (lastSubtitleRect.height / 2);
         const documentHeight = document.documentElement.scrollHeight;
         
-        const isLastEven = (subtitles.length - 1) % 2 === 0;
-        
         rotationRanges.push({
             coinIndex: subtitles.length,
             startPixel: lastCenter,
             endPixel: documentHeight,
-            startAngle: isLastEven ? 0 : Math.PI,
-            endAngle: isLastEven ? Math.PI : Math.PI * 2,
+            startAngle: 0,
+            endAngle: Math.PI,
             direction: 'forward'
         });
         
-        console.log(`Moneda final: ${lastCenter}px → ${documentHeight}px`);
+        console.log(`Moneda final: ${lastCenter}px (0°) → ${documentHeight}px (180°)`);
     }
     
     console.log('Rangos calculados:', rotationRanges);
@@ -160,45 +155,41 @@ function getCurrentCoinAndRotation(scrollTop) {
             
             // Calcular ángulo interpolado
             const angleDiff = range.endAngle - range.startAngle;
-            let currentAngle = range.startAngle + (angleDiff * clampedProgress);
+            const currentAngle = range.startAngle + (angleDiff * clampedProgress);
             
-            // Normalizar ángulo para 360° → 0°
-            if (currentAngle >= Math.PI * 2) {
-                currentAngle = currentAngle % (Math.PI * 2);
-            }
-            
-            // Calcular posición Y suave
-            const totalDocumentHeight = document.documentElement.scrollHeight;
+            // Posición Y controlada - nunca sale de pantalla
             const viewportHeight = window.innerHeight;
-            const scrollPercent = scrollTop / (totalDocumentHeight - viewportHeight);
-            const coinY = 3 - (scrollPercent * 6); // De Y=3 a Y=-3
+            const coinY = Math.max(-2, Math.min(2, -1 + (clampedProgress * 0.5))); // Mantener visible
             
             return {
                 coinIndex: range.coinIndex,
                 rotation: currentAngle,
-                positionY: Math.max(-3, Math.min(3, coinY)),
-                progress: clampedProgress
+                positionY: coinY,
+                progress: clampedProgress,
+                shouldChangeCoin: clampedProgress >= 0.95 && range.coinIndex < coins.length - 1
             };
         }
     }
     
-    // Si estamos antes del primer rango, mostrar primera moneda a 0°
+    // Si estamos antes del primer rango, mostrar primera moneda a 90°
     if (scrollTop < rotationRanges[0]?.startPixel) {
         return {
             coinIndex: 0,
-            rotation: 0, // 0°
-            positionY: 3,
-            progress: 0
+            rotation: Math.PI / 2, // 90° - cara visible
+            positionY: 0,
+            progress: 0,
+            shouldChangeCoin: false
         };
     }
     
     // Si estamos después del último rango, mostrar última moneda
     const lastRange = rotationRanges[rotationRanges.length - 1];
     return {
-        coinIndex: lastRange.coinIndex,
-        rotation: lastRange.endAngle,
-        positionY: -2,
-        progress: 1
+        coinIndex: lastRange ? lastRange.coinIndex : 0,
+        rotation: lastRange ? lastRange.endAngle : Math.PI,
+        positionY: -1,
+        progress: 1,
+        shouldChangeCoin: false
     };
 }
 
@@ -339,9 +330,9 @@ function setupCoinProperties(coin, index) {
 function setupInitialCoin() {
     if (coins.length > 0 && coins[0]) {
         coins[0].visible = true;
+        coins[0].rotation.x = Math.PI / 2; // Mostrar cara inicial (90°)
         currentCoinIndex = 0;
-        totalRotation = 0;
-        console.log('✓ Primera moneda activada y visible');
+        console.log('✓ Primera moneda activada mostrando su cara (90°)');
         
         // Intentar cargar GLB después
         loadAllCoins();
@@ -358,24 +349,32 @@ function animate() {
     // Obtener estado actual basado en scroll
     const coinState = getCurrentCoinAndRotation(lastScrollTop);
     
-    // Cambiar moneda si es necesario
-    if (coinState.coinIndex !== currentCoinIndex) {
+    // Cambio fluido de moneda cuando está de canto (180°)
+    if (coinState.shouldChangeCoin && coinState.coinIndex !== currentCoinIndex) {
+        console.log(`→ Transición fluida a moneda ${coinState.coinIndex + 1}`);
+        
+        // Ocultar moneda actual
         if (coins[currentCoinIndex]) {
             coins[currentCoinIndex].visible = false;
         }
         
+        // Mostrar nueva moneda
         currentCoinIndex = Math.min(coinState.coinIndex, coins.length - 1);
         
         if (coins[currentCoinIndex]) {
-            coins[currentCoinIndex].visible = true;
-            console.log(`→ Cambiando a moneda ${currentCoinIndex + 1}`);
+            const newCoin = coins[currentCoinIndex];
+            newCoin.position.y = coinState.positionY;
+            newCoin.position.x = 0;
+            newCoin.position.z = 0;
+            newCoin.rotation.x = 0; // Nueva moneda empieza mostrando cara
+            newCoin.visible = true;
         }
     }
     
     const currentCoin = coins[currentCoinIndex];
     if (!currentCoin) return;
     
-    // Aplicar transformaciones
+    // Aplicar transformaciones suaves
     currentCoin.position.y = coinState.positionY;
     currentCoin.position.x = 0;
     currentCoin.position.z = 0;
@@ -383,7 +382,7 @@ function animate() {
     // Rotaciones
     currentCoin.rotation.y += 0.02; // Horizontal continua
     currentCoin.rotation.x = coinState.rotation; // Vertical basada en posición
-    currentCoin.rotation.z = 0;
+    currentCoin.rotation.z = Math.sin(Date.now() * 0.001) * 0.05; // Variación sutil
     
     renderer.render(scene, camera);
 }
