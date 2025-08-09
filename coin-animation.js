@@ -169,12 +169,16 @@ function getCurrentCoinAndRotation(scrollTop) {
                 coinY = 2 - (totalScrollPercent * 4);
             }
             
-            // DETECCIÓN EXACTA A 180°: Cambio precisamente cuando currentAngle = Math.PI
-            const isExactlyAtEdge = Math.abs(currentAngle - Math.PI) < 0.005; // Tolerancia mínima
-            const isVeryCloseToEdge = Math.abs(currentAngle - Math.PI) < 0.02; // Para precarga
+            // CAMBIO SOLO AL FINAL DEL RANGO: cuando llegamos al subtítulo (endPixel)
+            const distanceToSubtitle = Math.abs(scrollTop - range.endPixel);
+            const isAtSubtitle = distanceToSubtitle < 5; // Muy cerca del subtítulo (5px)
+            const isAt180Degrees = Math.abs(currentAngle - Math.PI) < 0.1; // Cerca de 180°
             
             const nextCoinIndex = range.coinIndex + 1;
             const hasNextCoin = nextCoinIndex < coins.length && nextCoinIndex < rotationRanges.length;
+            
+            // Solo cambiar cuando estemos EN el subtítulo Y cerca de 180°
+            const shouldChangeCoin = isAtSubtitle && isAt180Degrees && hasNextCoin;
             
             return {
                 coinIndex: range.coinIndex,
@@ -182,11 +186,12 @@ function getCurrentCoinAndRotation(scrollTop) {
                 rotation: currentAngle,
                 positionY: coinY,
                 progress: clampedProgress,
-                shouldChangeCoin: isExactlyAtEdge && hasNextCoin,
-                isNearSubtitle: isVeryCloseToEdge && hasNextCoin,
+                shouldChangeCoin: shouldChangeCoin,
+                isNearSubtitle: distanceToSubtitle < 30 && hasNextCoin,
                 correctCoinIndex: range.coinIndex,
                 exactScrollPosition: scrollTop,
-                currentAngleInDegrees: (currentAngle * 180 / Math.PI).toFixed(1) // Para debug
+                currentAngleInDegrees: (currentAngle * 180 / Math.PI).toFixed(1),
+                distanceToSubtitle: distanceToSubtitle.toFixed(1) // Para debug
             };
         }
     }
@@ -410,7 +415,7 @@ function animate() {
         }
     }
     
-    // PRECARGAR cuando estemos muy cerca de 180°
+    // PRECARGAR cuando estemos cerca del subtítulo
     else if (coinState.isNearSubtitle && coins[coinState.nextCoinIndex]) {
         const currentCoin = coins[currentCoinIndex];
         const nextCoin = coins[coinState.nextCoinIndex];
@@ -424,10 +429,10 @@ function animate() {
         }
     }
     
-    // CAMBIO INSTANTÁNEO exactamente a 180°
+    // CAMBIO SOLO EN EL SUBTÍTULO
     else if (coinState.shouldChangeCoin && coinState.nextCoinIndex !== currentCoinIndex) {
         
-        console.log(`→ Cambio EXACTO a ${coinState.currentAngleInDegrees}°: moneda ${currentCoinIndex + 1} → ${coinState.nextCoinIndex + 1}`);
+        console.log(`→ Cambio EN SUBTÍTULO a ${coinState.currentAngleInDegrees}° (distancia: ${coinState.distanceToSubtitle}px): moneda ${currentCoinIndex + 1} → ${coinState.nextCoinIndex + 1}`);
         
         const currentCoin = coins[currentCoinIndex];
         const nextCoin = coins[coinState.nextCoinIndex];
@@ -438,12 +443,12 @@ function animate() {
             const exactRotationY = currentCoin.rotation.y;
             const exactRotationZ = currentCoin.rotation.z;
             
-            // Cambio atómico - ambas monedas en mismo frame
+            // Cambio atómico
             currentCoin.visible = false;
             
             nextCoin.position.copy(exactPosition);
             nextCoin.rotation.y = exactRotationY;
-            nextCoin.rotation.x = Math.PI; // Exactamente de canto
+            nextCoin.rotation.x = Math.PI; // Empezar de canto
             nextCoin.rotation.z = exactRotationZ;
             nextCoin.visible = true;
             
