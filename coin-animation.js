@@ -2,6 +2,8 @@ let scene, camera, renderer, coin;
 let scrollProgress = 0;
 let targetScrollProgress = 0;
 let isAnimating = true;
+let subtitlePositions = [];
+let currentRotationTarget = 0;
 
 function init() {
     // Create scene
@@ -35,7 +37,8 @@ function init() {
     // Cargar el modelo coin.glb
     loadCoinModel();
     
-    // Setup scroll listener
+    // Calculate subtitle positions and setup scroll listener
+    calculateSubtitlePositions();
     setupScrollListener();
     
     // Start animation
@@ -43,6 +46,40 @@ function init() {
     
     // Handle window resize
     window.addEventListener('resize', onWindowResize, false);
+}
+
+function calculateSubtitlePositions() {
+    // Obtener todos los h2 (subtítulos)
+    const subtitles = document.querySelectorAll('.content h2');
+    subtitlePositions = [];
+    
+    const totalScrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+    
+    subtitles.forEach((subtitle, index) => {
+        const rect = subtitle.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const absolutePosition = rect.top + scrollTop;
+        
+        // Convertir a progreso normalizado (0-1)
+        const normalizedPosition = absolutePosition / (document.documentElement.scrollHeight);
+        
+        subtitlePositions.push({
+            element: subtitle,
+            normalizedPosition: normalizedPosition,
+            absolutePosition: absolutePosition,
+            rotationTarget: index * Math.PI // 180º por cada subtítulo
+        });
+        
+        console.log(`Subtítulo ${index}: "${subtitle.textContent}" en posición ${normalizedPosition.toFixed(3)}`);
+    });
+    
+    // Añadir posición inicial (arriba de todo)
+    subtitlePositions.unshift({
+        element: null,
+        normalizedPosition: 0,
+        absolutePosition: 0,
+        rotationTarget: 0
+    });
 }
 
 function setupScrollListener() {
@@ -64,6 +101,47 @@ function setupScrollListener() {
             ticking = true;
         }
     });
+    
+    // Recalcular posiciones en resize
+    window.addEventListener('resize', function() {
+        setTimeout(calculateSubtitlePositions, 100);
+    });
+}
+
+function calculateCoinRotation() {
+    if (subtitlePositions.length === 0) return 0;
+    
+    // Encontrar entre qué subtítulos estamos
+    let currentSection = 0;
+    for (let i = 0; i < subtitlePositions.length - 1; i++) {
+        if (targetScrollProgress >= subtitlePositions[i].normalizedPosition && 
+            targetScrollProgress <= subtitlePositions[i + 1].normalizedPosition) {
+            currentSection = i;
+            break;
+        }
+    }
+    
+    // Si estamos después del último subtítulo
+    if (targetScrollProgress > subtitlePositions[subtitlePositions.length - 1].normalizedPosition) {
+        currentSection = subtitlePositions.length - 1;
+    }
+    
+    // Calcular progreso entre los dos subtítulos
+    const currentSubtitle = subtitlePositions[currentSection];
+    const nextSubtitle = subtitlePositions[currentSection + 1];
+    
+    if (!nextSubtitle) {
+        return currentSubtitle.rotationTarget;
+    }
+    
+    const sectionProgress = (targetScrollProgress - currentSubtitle.normalizedPosition) / 
+                           (nextSubtitle.normalizedPosition - currentSubtitle.normalizedPosition);
+    
+    // Interpolación suave entre rotaciones (0 a 180º por sección)
+    const rotationDifference = nextSubtitle.rotationTarget - currentSubtitle.rotationTarget;
+    const targetRotation = currentSubtitle.rotationTarget + (rotationDifference * sectionProgress);
+    
+    return targetRotation;
 }
 
 function loadCoinModel() {
@@ -158,30 +236,25 @@ function animate() {
     
     if (coin) {
         // Suavizar el progreso del scroll con interpolación
-        scrollProgress += (targetScrollProgress - scrollProgress) * 0.1;
+        scrollProgress += (targetScrollProgress - scrollProgress) * 0.08;
         
-        // Calcular posición Y basada en el scroll (de arriba hacia abajo)
-        const scrollRange = 8; // Rango total de movimiento
+        // MOVIMIENTO VERTICAL: Solo basado en el scroll
+        const scrollRange = 8; // Rango total de movimiento vertical
         coin.position.y = 3 - (scrollProgress * scrollRange);
         
-        // Rotación continua pero influenciada por el scroll
-        const baseRotationSpeed = 0.02;
-        const scrollInfluence = Math.abs(targetScrollProgress - scrollProgress) * 0.1;
+        // ROTACIÓN HORIZONTAL: Continua todo el tiempo
+        coin.rotation.y += 0.02;
         
-        coin.rotation.y += baseRotationSpeed + scrollInfluence;
-        coin.rotation.x += (baseRotationSpeed * 0.3) + (scrollInfluence * 0.5);
+        // ROTACIÓN VERTICAL: Basada en los subtítulos (180º entre cada uno)
+        const targetVerticalRotation = calculateCoinRotation();
+        currentRotationTarget += (targetVerticalRotation - currentRotationTarget) * 0.05;
+        coin.rotation.x = currentRotationTarget;
         
-        // Oscilación lateral sutil para simular caída por aire
-        const sideFloat = Math.sin(Date.now() * 0.003) * 0.2;
-        coin.position.x = sideFloat * (1 + scrollProgress * 0.5);
+        // POSICIÓN X: Fija en el centro (sin oscilación lateral)
+        coin.position.x = 0;
         
-        // Rotación en Z para efecto de caída más realista
-        coin.rotation.z = Math.sin(Date.now() * 0.002) * 0.1;
-        
-        // Pequeña variación en la escala para efecto de "respiración"
-        const breathe = 1 + Math.sin(Date.now() * 0.004) * 0.05;
-        coin.scale.multiplyScalar(breathe);
-        coin.scale.multiplyScalar(1/breathe); // Resetear para el próximo frame
+        // ROTACIÓN Z: Pequeña variación sutil para naturalidad
+        coin.rotation.z = Math.sin(Date.now() * 0.001) * 0.05;
     }
     
     renderer.render(scene, camera);
@@ -192,6 +265,9 @@ function onWindowResize() {
     camera.aspect = container.offsetWidth / container.offsetHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(container.offsetWidth, container.offsetHeight);
+    
+    // Recalcular posiciones de subtítulos después del resize
+    setTimeout(calculateSubtitlePositions, 100);
 }
 
 // Initialize the scene
