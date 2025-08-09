@@ -5,21 +5,136 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Animated 3D Coin</title>
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
-            overflow: hidden;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            font-family: Arial, sans-serif;
+            box-sizing: border-box;
         }
-        #container {
-            width: 100vw;
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            line-height: 1.6;
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .content {
+            flex: 1;
+            padding: 40px;
+            max-width: 60%;
+            z-index: 10;
+            position: relative;
+        }
+        
+        .content h1 {
+            font-size: 3rem;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .content h2 {
+            font-size: 2rem;
+            margin: 40px 0 20px 0;
+            color: #ffd700;
+        }
+        
+        .content p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+        
+        .coin-container {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 40%;
             height: 100vh;
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        .spacer {
+            height: 200vh;
+        }
+        
+        .highlight-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #ffd700;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
-    <div id="container"></div>
+    <div class="container">
+        <div class="content">
+            <h1>Moneda Digital Cayendo</h1>
+            
+            <p>Bienvenido a una experiencia única donde una moneda digital te acompaña mientras exploras el contenido. La moneda responde fluidamente a tu navegación, creando una sensación inmersiva y satisfactoria.</p>
+            
+            <h2>¿Cómo Funciona?</h2>
+            <p>Utilizando tecnología WebGL y Three.js, hemos creado una moneda 3D que reacciona en tiempo real al movimiento de scroll de la página. Cada movimiento es calculado para proporcionar una experiencia visual fluida y realista.</p>
+            
+            <div class="highlight-box">
+                <p><strong>Características principales:</strong></p>
+                <ul>Modificar la animación para que responda al scroll:
+                
+                
+                    <li>Animación sincronizada con el scroll</li>
+                    <li>Rotación realista de la moneda</li>
+                    <li>Efectos de iluminación dinámicos</li>
+                    <li>Respuesta fluida al movimiento</li>
+                </ul>
+            </div>
+            
+            <h2>Tecnología Detrás de la Magia</h2>
+            <p>Esta experiencia está construida con las últimas tecnologías web. Three.js proporciona el motor de renderizado 3D, mientras que JavaScript maneja la sincronización entre el scroll y la animación de la moneda.</p>
+            
+            <p>La moneda está diseñada para seguir principios físicos realistas. Cuando te desplazas hacia abajo, la moneda cae con una aceleración natural. Cuando subes, la moneda sube suavemente, manteniendo siempre una rotación característica que simula una moneda real cayendo por el aire.</p>
+            
+            <h2>Detalles de la Implementación</h2>
+            <p>El sistema utiliza interpolación suave para evitar movimientos bruscos. Cada frame de animación calcula la posición ideal de la moneda basándose en la posición actual del scroll, aplicando una función de suavizado que hace que los movimientos se sientan naturales y orgánicos.</p>
+            
+            <p>Los efectos de iluminación están cuidadosamente calibrados para resaltar los detalles de la moneda y crear reflejos realistas que cambian sutilmente durante la rotación.</p>
+            
+            <h2>Optimización y Rendimiento</h2>
+            <p>La aplicación está optimizada para mantener 60 FPS incluso en dispositivos menos potentes. Utilizamos técnicas como culling de objetos fuera de pantalla y LOD (Level of Detail) para asegurar una experiencia fluida.</p>
+            
+            <div class="highlight-box">
+                <p><strong>Consejos para la mejor experiencia:</strong></p>
+                <ul>
+                    <li>Usa un navegador moderno (Chrome, Firefox, Safari)</li>
+                    <li>Asegúrate de tener aceleración por hardware habilitada</li>
+                    <li>Desplázate lentamente para apreciar mejor la animación</li>
+                    <li>Prueba tanto con el mouse como con gestos táctiles</li>
+                </ul>
+            </div>
+            
+            <h2>Futuras Mejoras</h2>
+            <p>Estamos trabajando en nuevas características como partículas que sigan a la moneda, efectos de sonido sincronizados, y la posibilidad de cambiar entre diferentes tipos de monedas con animaciones únicas.</p>
+            
+            <p>También planeamos añadir opciones de personalización que permitan a los usuarios ajustar la velocidad de la animación, los colores de la iluminación, y otros aspectos visuales según sus preferencias.</p>
+            
+            <h2>Conclusión</h2>
+            <p>Esta demostración representa la convergencia entre diseño web moderno y tecnología 3D. Es un ejemplo de cómo las experiencias web pueden ser tanto funcionales como visualmente cautivadoras.</p>
+            
+            <p>Continúa navegando para ver cómo la moneda te acompaña en tu viaje por el contenido. ¡Disfruta de la experiencia!</p>
+            
+            <div class="spacer"></div>
+        </div>
+        
+        <div class="coin-container" id="coin-container"></div>
+    </div>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
