@@ -1,143 +1,234 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>easySQL - Transforma Excel en Bases de Datos</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-            line-height: 1.8;
-        }
-        
-        .container {
-            display: flex;
-            min-height: 100vh;
-        }
-        
-        .content {
-            flex: 1;
-            padding: 60px 80px;
-            max-width: 60%;
-            z-index: 10;
-            position: relative;
-        }
-        
-        .content h1 {
-            font-size: 5rem;
-            margin-bottom: 80px;
-            margin-top: 40px;
-            background: linear-gradient(45deg, #ffd700, #ffed4e);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: bold;
-            line-height: 1.2;
-        }
-        
-        .content h2 {
-            font-size: 2.5rem;
-            margin: 150px 0 50px 0;
-            color: #ffd700;
-            font-weight: bold;
-        }
-        
-        .content p {
-            font-size: 1.3rem;
-            margin-bottom: 30px;
-            text-align: justify;
-            line-height: 1.8;
-        }
-        
-        .coin-container {
-            position: fixed;
-            right: 0;
-            top: 0;
-            width: 40%;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 5;
-        }
-        
-        .spacer {
-            height: 300vh;
-        }
-        
-        .highlight-box {
-            background: rgba(255, 215, 0, 0.1);
-            border-left: 4px solid #ffd700;
-            padding: 30px;
-            margin: 50px 0;
-            border-radius: 8px;
-        }
-        
-        .section {
-            margin-bottom: 200px;
-        }
-    </style>
+    <title>easySQL - Transforma Excel en Bases de Datos Potentes</title>
+    <link rel="stylesheet" href="styles/common.css">
+    <link rel="stylesheet" href="styles/home.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <div class="content">
-            <h1>easySQL</h1>
-            
-            <div class="section">
-                <p>Bienvenido a easySQL, la solución revolucionaria que transforma tus hojas de Excel en potentes bases de datos relacionales. Nuestra plataforma te acompaña en cada paso del proceso, creando una experiencia fluida e intuitiva.</p>
-                
-                <p>Cada moneda que ves representa un aspecto clave de nuestra propuesta de valor: desde nuestra identidad hasta los beneficios concretos que obtienes al elegir easySQL.</p>
+    <!-- Navigation Header -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <div class="logo-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <span class="logo-text">easySQL</span>
             </div>
-            
-            <div class="section">
-                <h2>Ahorra Tiempo Valioso</h2>
-                <p>Con easySQL, lo que antes te tomaba semanas de desarrollo ahora se completa en minutos. Nuestra tecnología automatizada elimina la complejidad de crear estructuras de bases de datos desde cero.</p>
-                
-                <p>Nuestro sistema inteligente analiza tus datos de Excel y genera automáticamente las tablas, relaciones y consultas optimizadas. Sin código, sin complicaciones, solo resultados inmediatos.</p>
+            <ul class="nav-menu" id="nav-menu">
+                <li class="nav-item active">
+                    <a href="index.html" class="nav-link">Bienvenida</a>
+                </li>
+                <li class="nav-item">
+                    <a href="quienes-somos.html" class="nav-link">Quiénes Somos</a>
+                </li>
+                <li class="nav-item">
+                    <a href="porque-usar-easysql.html" class="nav-link">¿Por qué usar easySQL?</a>
+                </li>
+                <li class="nav-item">
+                    <a href="como-empezar.html" class="nav-link">¿Cómo Empezar?</a>
+                </li>
+            </ul>
+            <div class="nav-buttons">
+                <button class="btn-secondary">Iniciar Sesión</button>
+                <button class="btn-primary pulse-animation">Empezar Gratis</button>
             </div>
-            
-            <div class="section">
-                <h2>Adiós a las Limitaciones de Excel</h2>
-                <p>Deja atrás las restricciones de las hojas de cálculo tradicionales. Excel es excelente para análisis simples, pero cuando tus datos crecen, necesitas la potencia de una verdadera base de datos relacional.</p>
-                
-                <p>easySQL mantiene toda la familiaridad de Excel mientras te proporciona capacidades empresariales: consultas complejas, integridad referencial, escalabilidad y rendimiento optimizado para grandes volúmenes de datos.</p>
+            <div class="hamburger" id="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
             </div>
-            
-            <div class="section">
-                <h2>Máxima Seguridad y Confiabilidad</h2>
-                <p>Tus datos están protegidos con los más altos estándares de seguridad. Implementamos encriptación de extremo a extremo, copias de seguridad automáticas y controles de acceso granulares.</p>
-                
-                <p>Cumplimos con las normativas GDPR y SOC 2, garantizando que tu información empresarial esté siempre segura. Nuestros servidores distribuidos aseguran disponibilidad 99.9% y recuperación ante desastres.</p>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-background">
+            <div class="floating-shapes">
+                <div class="shape shape-1"></div>
+                <div class="shape shape-2"></div>
+                <div class="shape shape-3"></div>
+                <div class="shape shape-4"></div>
             </div>
-            
-            <div class="section">
-                <h2>ROI Inmediato y Sostenible</h2>
-                <p>easySQL no es solo una herramienta, es una inversión inteligente. Reduce significativamente los costos de desarrollo, mantenimiento y tiempo de tu equipo técnico.</p>
-                
-                <p>Comparado con soluciones tradicionales que requieren meses de desarrollo y equipos especializados, easySQL se paga solo en las primeras semanas. Más productividad, menos gastos, resultados medibles desde el día uno.</p>
-            </div>
-            
-            <div class="section">
-                <h2>El Futuro de la Gestión de Datos</h2>
-                <p>easySQL representa la evolución natural del análisis de datos empresarial. Combina la simplicidad que conoces con la potencia que necesitas para escalar tu negocio.</p>
-                
-                <p>Únete a miles de empresas que ya transformaron sus procesos con easySQL. Descubre cómo puedes llevar tus datos al siguiente nivel sin complicaciones técnicas ni inversiones masivas.</p>
-            </div>
-            
-            <div class="spacer"></div>
         </div>
         
-        <div class="coin-container" id="coin-container"></div>
-    </div>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="coin-animation.js"></script>
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="title-line fade-in-up" style="animation-delay: 0.2s">Transforma tu</span>
+                    <span class="title-highlight fade-in-up" style="animation-delay: 0.4s">Excel</span>
+                    <span class="title-line fade-in-up" style="animation-delay: 0.6s">en una</span>
+                    <span class="title-highlight fade-in-up" style="animation-delay: 0.8s">Base de Datos</span>
+                    <span class="title-line fade-in-up" style="animation-delay: 1s">Potente</span>
+                </h1>
+                
+                <p class="hero-subtitle fade-in-up" style="animation-delay: 1.2s">
+                    Sin código, sin complicaciones. easySQL convierte tus hojas de cálculo en 
+                    bases de datos relacionales profesionales en minutos.
+                </p>
+                
+                <div class="hero-buttons fade-in-up" style="animation-delay: 1.4s">
+                    <button class="btn-hero-primary">
+                        <i class="fas fa-rocket"></i>
+                        Empezar Gratis
+                    </button>
+                    <button class="btn-hero-secondary">
+                        <i class="fas fa-play"></i>
+                        Ver Demo
+                    </button>
+                </div>
+                
+                <div class="hero-stats fade-in-up" style="animation-delay: 1.6s">
+                    <div class="stat">
+                        <div class="stat-number">10,000+</div>
+                        <div class="stat-label">Empresas confían en nosotros</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">5 min</div>
+                        <div class="stat-label">Tiempo promedio de migración</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">99.9%</div>
+                        <div class="stat-label">Disponibilidad garantizada</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="hero-visual">
+                <div class="visual-container fade-in-right" style="animation-delay: 0.8s">
+                    <div class="excel-card">
+                        <div class="card-header">
+                            <i class="fas fa-file-excel excel-icon"></i>
+                            <span>ventas_2024.xlsx</span>
+                        </div>
+                        <div class="card-content">
+                            <div class="excel-grid">
+                                <div class="grid-cell">Cliente</div>
+                                <div class="grid-cell">Producto</div>
+                                <div class="grid-cell">Cantidad</div>
+                                <div class="grid-cell">Precio</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="transform-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                        <div class="transform-text">Transforma en 5 min</div>
+                    </div>
+                    
+                    <div class="database-card">
+                        <div class="card-header">
+                            <i class="fas fa-database db-icon"></i>
+                            <span>Base de Datos SQL</span>
+                        </div>
+                        <div class="card-content">
+                            <div class="db-features">
+                                <div class="feature"><i class="fas fa-check"></i> Relaciones automáticas</div>
+                                <div class="feature"><i class="fas fa-check"></i> Consultas optimizadas</div>
+                                <div class="feature"><i class="fas fa-check"></i> Escalabilidad infinita</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">¿Por qué elegir easySQL?</h2>
+                <p class="section-subtitle">
+                    La solución más completa para evolucionar de Excel a bases de datos profesionales
+                </p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+                    <div class="feature-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3>Ahorra Tiempo</h3>
+                    <p>De semanas de desarrollo a minutos de configuración automática</p>
+                </div>
+                
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Máxima Seguridad</h3>
+                    <p>Encriptación extremo a extremo y cumplimiento GDPR garantizado</p>
+                </div>
+                
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Escalabilidad</h3>
+                    <p>Crece con tu negocio sin límites de tamaño o rendimiento</p>
+                </div>
+                
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="400">
+                    <div class="feature-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <h3>ROI Inmediato</h3>
+                    <p>Recupera tu inversión en las primeras semanas de uso</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2>¿Listo para transformar tus datos?</h2>
+                <p>Únete a miles de empresas que ya evolucionaron de Excel a easySQL</p>
+                <div class="cta-buttons">
+                    <button class="btn-cta-primary">
+                        <i class="fas fa-rocket"></i>
+                        Comenzar Ahora
+                    </button>
+                    <button class="btn-cta-secondary">
+                        <i class="fas fa-calendar-alt"></i>
+                        Agendar Demo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <span class="logo-text">easySQL</span>
+                </div>
+                <div class="footer-links">
+                    <a href="#">Términos</a>
+                    <a href="#">Privacidad</a>
+                    <a href="#">Soporte</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 easySQL. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="scripts/common.js"></script>
+    <script src="scripts/home.js"></script>
 </body>
 </html>

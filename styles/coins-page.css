@@ -1,0 +1,440 @@
+/* Page Layout with Coins */
+.page-container {
+    display: flex;
+    min-height: 100vh;
+    margin-top: 70px; /* Account for fixed navbar */
+}
+
+.content {
+    flex: 1;
+    max-width: 60%;
+    padding: 60px 80px;
+    background: var(--bg-primary);
+    position: relative;
+    z-index: 10;
+}
+
+/* Hero Section */
+.hero-section {
+    margin-bottom: 80px;
+    padding-top: 40px;
+}
+
+.page-title {
+    font-size: 4rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 24px;
+    color: var(--text-primary);
+}
+
+.title-line {
+    display: block;
+    color: var(--text-primary);
+}
+
+.title-highlight {
+    display: block;
+    background: var(--bg-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.page-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 80%;
+}
+
+/* Sections */
+.section {
+    margin-bottom: 120px;
+}
+
+.section-heading {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.section-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--bg-gradient);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+}
+
+.content-block p {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 24px;
+}
+
+.intro-text {
+    font-size: 1.3rem !important;
+    color: var(--text-primary) !important;
+    font-weight: 500;
+}
+
+/* Highlight Boxes */
+.highlight-box {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    border-left: 4px solid var(--primary-color);
+    padding: 32px;
+    margin: 40px 0;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.highlight-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+}
+
+.highlight-box:hover::before {
+    transform: translateX(100%);
+}
+
+.highlight-box h4 {
+    color: var(--primary-color);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.highlight-box p {
+    margin-bottom: 0;
+    color: var(--text-primary);
+}
+
+/* Comparison Grid */
+.comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin: 40px 0;
+}
+
+.comparison-item {
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-light);
+    transition: var(--transition-medium);
+}
+
+.comparison-item.excel {
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border: 2px solid #dc3545;
+}
+
+.comparison-item.easysql {
+    background: linear-gradient(135deg, #fff 0%, #f0f9ff 100%);
+    border: 2px solid var(--primary-color);
+}
+
+.comparison-item:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-medium);
+}
+
+.comparison-item h4 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.comparison-item.excel h4 {
+    color: #dc3545;
+}
+
+.comparison-item.easysql h4 {
+    color: var(--primary-color);
+}
+
+.comparison-item ul {
+    list-style: none;
+    padding: 0;
+}
+
+.comparison-item li {
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.comparison-item.excel li::before {
+    content: '✗';
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.comparison-item.easysql li::before {
+    content: '✓';
+    color: var(--secondary-color);
+    font-weight: bold;
+}
+
+/* Security Features */
+.security-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+    margin: 40px 0;
+}
+
+.security-item {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-light);
+    text-align: center;
+    transition: var(--transition-medium);
+    border: 1px solid var(--border-color);
+}
+
+.security-item:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-medium);
+}
+
+.security-item i {
+    font-size: 32px;
+    color: var(--primary-color);
+    margin-bottom: 16px;
+    display: block;
+}
+
+.security-item h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.security-item p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* ROI Calculator */
+.roi-calculator {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 16px;
+    padding: 32px;
+    margin: 40px 0;
+    border: 1px solid var(--border-color);
+}
+
+.roi-calculator h4 {
+    color: var(--text-primary);
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.roi-items {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.roi-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: var(--shadow-light);
+}
+
+.roi-item.total {
+    background: var(--bg-gradient);
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.roi-label {
+    font-weight: 500;
+}
+
+.roi-value {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.roi-item.savings .roi-value {
+    color: var(--secondary-color);
+}
+
+/* CTA Section */
+.cta-section {
+    background: var(--bg-gradient);
+    padding: 60px 40px;
+    border-radius: 20px;
+    text-align: center;
+    color: white;
+    margin: 80px 0;
+}
+
+.cta-section h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.cta-section p {
+    font-size: 1.2rem;
+    margin-bottom: 40px;
+    opacity: 0.9;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-cta-primary,
+.btn-cta-secondary {
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    border: none;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-cta-primary {
+    background: var(--gold-color);
+    color: var(--text-primary);
+}
+
+.btn-cta-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-heavy);
+}
+
+.btn-cta-secondary {
+    background: transparent;
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-cta-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Coin Container */
+.coin-container {
+    position: fixed;
+    right: 0;
+    top: 70px;
+    width: 40%;
+    height: calc(100vh - 70px);
+    pointer-events: all; /* Enable interactions */
+    z-index: 5;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+}
+
+.spacer {
+    height: 300vh;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .content {
+        max-width: 65%;
+        padding: 40px 60px;
+    }
+    
+    .coin-container {
+        width: 35%;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-container {
+        flex-direction: column;
+    }
+    
+    .content {
+        max-width: 100%;
+        padding: 20px;
+    }
+    
+    .coin-container {
+        position: relative;
+        width: 100%;
+        height: 300px;
+        top: 0;
+    }
+    
+    .page-title {
+        font-size: 2.5rem;
+    }
+    
+    .section-heading {
+        font-size: 2rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .comparison-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .security-features {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+    
+    .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .roi-item {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+}
