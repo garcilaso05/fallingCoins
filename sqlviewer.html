@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Viewer - Modelos 3D con Animaciones</title>
+    <link rel="stylesheet" href="styles/common.css">
+    <link rel="stylesheet" href="styles/sql-viewer.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation Header -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <div class="logo-icon">
+                    <i class="fas fa-cube"></i>
+                </div>
+                <span class="logo-text">3D Showcase</span>
+            </div>
+            <ul class="nav-menu" id="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">Moneda 3D</a>
+                </li>
+                <li class="nav-item">
+                    <a href="minisql.html" class="nav-link">miniSQL</a>
+                </li>
+                <li class="nav-item">
+                    <a href="mascotita.html" class="nav-link">Mascotita</a>
+                </li>
+                <li class="nav-item">
+                    <a href="minecraft.html" class="nav-link">Minecraft</a>
+                </li>
+                <li class="nav-item active">
+                    <a href="sqlviewer.html" class="nav-link">SQL Viewer</a>
+                </li>
+            </ul>
+            <div class="nav-buttons">
+                <a href="https://github.com/garcilaso05/" target="_blank" class="btn-primary">
+                    <i class="fab fa-github"></i>
+                    GitHub
+                </a>
+            </div>
+            <div class="hamburger" id="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="sql-viewer-container">
+        <!-- Viewer Section -->
+        <section class="viewer-section">
+            <div class="sql-3d-viewer" id="sql-3d-viewer">
+                <div class="loading-overlay" id="loading-overlay">
+                    <div class="loading-spinner"></div>
+                    <span>Cargando modelos SQL...</span>
+                </div>
+            </div>
+            
+            <!-- Controls Panel -->
+            <div class="controls-panel">
+                <div class="model-info">
+                    <h3 id="model-title">SQL1</h3>
+                    <p id="model-description">Modelo de base de datos 3D</p>
+                </div>
+                
+                <!-- Model Navigation -->
+                <div class="navigation-controls">
+                    <button class="nav-btn" id="prev-model">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="model-counter" id="model-counter">1 / 5</span>
+                    <button class="nav-btn" id="next-model">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                
+                <!-- Size Control -->
+                <div class="size-control">
+                    <label for="size-slider">
+                        <i class="fas fa-expand-arrows-alt"></i>
+                        Tamaño del Modelo
+                    </label>
+                    <input type="range" id="size-slider" min="0.5" max="3" step="0.1" value="1">
+                    <span id="size-value">1.0x</span>
+                </div>
+                
+                <!-- Animation Control -->
+                <div class="animation-control">
+                    <button class="animation-btn" id="play-pause-btn">
+                        <i class="fas fa-pause"></i>
+                        Pausar Animaciones
+                    </button>
+                    <div class="animation-speed">
+                        <label for="speed-slider">
+                            <i class="fas fa-tachometer-alt"></i>
+                            Velocidad
+                        </label>
+                        <input type="range" id="speed-slider" min="0.1" max="2" step="0.1" value="1">
+                        <span id="speed-value">1.0x</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Info Section -->
+        <section class="info-section">
+            <div class="info-content">
+                <h1 class="section-title">
+                    <span class="title-highlight">SQL Viewer</span>
+                    <span class="title-line">Visualizador Personalizado</span>
+                </h1>
+                
+                <p class="section-subtitle">
+                    Un visualizador 3D personalizado para modelos SQL con control total sobre 
+                    animaciones, tamaño y navegación. Implementado desde cero sin usar model-viewer.js.
+                </p>
+                
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <i class="fas fa-sliders-h"></i>
+                        <h3>Control de Tamaño</h3>
+                        <p>Ajusta el tamaño del modelo en tiempo real con el slider</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <i class="fas fa-play-circle"></i>
+                        <h3>Animaciones</h3>
+                        <p>Reproduce automáticamente las animaciones incluidas en los modelos</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <i class="fas fa-arrows-alt"></i>
+                        <h3>Navegación</h3>
+                        <p>Cambia entre los 5 modelos SQL con controles intuitivos</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <i class="fas fa-code"></i>
+                        <h3>Implementación Custom</h3>
+                        <p>Visualizador creado desde cero para demostrar flexibilidad</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="scripts/common.js"></script>
+    <script src="scripts/sql-viewer.js"></script>
+</body>
+</html>
