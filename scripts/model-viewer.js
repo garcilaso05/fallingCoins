@@ -10,6 +10,7 @@ class ModelViewer {
         this.currentIndex = 0;
         this.isLoading = false;
         this.clock = new THREE.Clock();
+        this.loadedCount = 0;
         
         // Get configuration from script tag
         const script = document.querySelector('script[data-models]');
@@ -18,7 +19,7 @@ class ModelViewer {
         
         this.init();
         this.setupControls();
-        this.preloadModels();
+        this.startLoadingModels();
     }
     
     init() {
@@ -39,7 +40,7 @@ class ModelViewer {
             premultipliedAlpha: false
         });
         this.renderer.setSize(container.offsetWidth, container.offsetHeight);
-        this.renderer.setClearColor(0x000000, 0); // Completely transparent
+        this.renderer.setClearColor(0x000000, 0);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         container.appendChild(this.renderer.domElement);
@@ -99,43 +100,99 @@ class ModelViewer {
         });
     }
     
-    async preloadModels() {
+    startLoadingModels() {
         this.showLoading();
         
-        const loader = new THREE.GLTFLoader();
-        
-        for (let i = 1; i <= this.modelCount; i++) {
-            try {
-                const modelPath = `./models/${this.modelPrefix}${i}.glb`;
-                console.log(`Cargando: ${modelPath}`);
-                
-                const gltf = await this.loadModel(loader, modelPath);
-                this.models[i - 1] = gltf.scene;
-                
-                // Store animations if any
-                if (gltf.animations && gltf.animations.length > 0) {
-                    this.animations[i - 1] = gltf.animations;
-                    console.log(`${this.modelPrefix}${i} tiene ${gltf.animations.length} animaciones`);
-                } else {
-                    this.animations[i - 1] = [];
-                }
-                
-                // Setup model properties
-                this.setupModelProperties(this.models[i - 1], i - 1);
-                
-                console.log(`${this.modelPrefix}${i} cargado exitosamente`);
-            } catch (error) {
-                console.log(`Error cargando ${this.modelPrefix}${i}, creando modelo de respaldo`);
-                this.models[i - 1] = this.createFallbackModel(i);
-                this.animations[i - 1] = [];
-            }
+        // Initialize arrays
+        for (let i = 0; i < this.modelCount; i++) {
+            this.models[i] = null;
+            this.animations[i] = [];
+            this.mixers[i] = null;
         }
         
-        // Show first model
+        // Create first fallback model immediately and show it
+        this.models[0] = this.createFallbackModel(1);
+        this.setupModelProperties(this.models[0], 0);
         this.showModel(0);
         this.hideLoading();
         this.updateControls();
-        console.log(`${this.models.length} modelos listos`);
+        
+        // Load real models in the background one by one
+        this.loadModelsSequentially();
+    }
+    
+    async loadModelsSequentially() {
+        console.log('Iniciando carga secuencial de modelos...');
+        
+        // Check if GLTFLoader is available
+        if (typeof THREE.GLTFLoader === 'undefined') {
+            console.log('GLTFLoader no disponible, usando solo modelos de respaldo');
+            this.createAllFallbackModels();
+            return;
+        }
+        
+        const loader = new THREE.GLTFLoader();
+        
+        for (let i = 0; i < this.modelCount; i++) {
+            try {
+                const modelPath = `./models/${this.modelPrefix}${i + 1}.glb`;
+                console.log(`Cargando modelo ${i + 1}: ${modelPath}`);
+                
+                const gltf = await this.loadModel(loader, modelPath);
+                
+                // Replace fallback or create new model
+                if (this.models[i] && this.currentIndex === i) {
+                    // Currently showing, need to replace carefully
+                    this.scene.remove(this.models[i]);
+                }
+                
+                this.models[i] = gltf.scene;
+                
+                // Store animations if any
+                if (gltf.animations && gltf.animations.length > 0) {
+                    this.animations[i] = gltf.animations;
+                    console.log(`Modelo ${i + 1} tiene ${gltf.animations.length} animaciones`);
+                } else {
+                    this.animations[i] = [];
+                }
+                
+                // Setup model properties
+                this.setupModelProperties(this.models[i], i);
+                
+                // If this is the current model, show it
+                if (this.currentIndex === i) {
+                    this.showModel(i);
+                }
+                
+                this.loadedCount++;
+                console.log(`Modelo ${i + 1} cargado (${this.loadedCount}/${this.modelCount})`);
+                
+                // Small delay to prevent overwhelming
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+            } catch (error) {
+                console.log(`Error cargando modelo ${i + 1}, manteniendo fallback:`, error.message);
+                
+                // Create fallback if not exists
+                if (!this.models[i]) {
+                    this.models[i] = this.createFallbackModel(i + 1);
+                    this.setupModelProperties(this.models[i], i);
+                }
+            }
+        }
+        
+        console.log(`Carga completada: ${this.loadedCount}/${this.modelCount} modelos reales cargados`);
+    }
+    
+    createAllFallbackModels() {
+        console.log('Creando todos los modelos de respaldo...');
+        
+        for (let i = 0; i < this.modelCount; i++) {
+            if (!this.models[i]) {
+                this.models[i] = this.createFallbackModel(i + 1);
+                this.setupModelProperties(this.models[i], i);
+            }
+        }
     }
     
     loadModel(loader, path) {
@@ -144,7 +201,8 @@ class ModelViewer {
                 path,
                 (gltf) => resolve(gltf),
                 (progress) => {
-                    console.log(`Progreso: ${(progress.loaded / progress.total * 100)}%`);
+                    const percentage = (progress.loaded / progress.total * 100).toFixed(1);
+                    console.log(`Progreso: ${percentage}%`);
                 },
                 (error) => reject(error)
             );
@@ -153,17 +211,44 @@ class ModelViewer {
     
     createFallbackModel(index) {
         const colors = [0x3b82f6, 0x10b981, 0x8b5cf6, 0xf59e0b, 0x6366f1];
-        const geometry = new THREE.BoxGeometry(2, 2, 2);
+        
+        // Create a more interesting fallback
+        const group = new THREE.Group();
+        
+        // Main shape
+        const geometry = this.modelPrefix === 'M' ? 
+            new THREE.SphereGeometry(1, 16, 16) : 
+            new THREE.BoxGeometry(1.5, 1.5, 1.5);
+            
         const material = new THREE.MeshPhongMaterial({ 
             color: colors[(index - 1) % colors.length],
-            shininess: 100 
+            shininess: 100
         });
         
-        const model = new THREE.Mesh(geometry, material);
-        model.castShadow = true;
-        model.receiveShadow = true;
+        const mainMesh = new THREE.Mesh(geometry, material);
+        mainMesh.castShadow = true;
+        mainMesh.receiveShadow = true;
+        group.add(mainMesh);
         
         // Add some details
+        const detailGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+        const detailMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0xffffff,
+            opacity: 0.8,
+            transparent: true
+        });
+        
+        for (let i = 0; i < 3; i++) {
+            const detail = new THREE.Mesh(detailGeometry, detailMaterial);
+            detail.position.set(
+                (Math.random() - 0.5) * 2,
+                (Math.random() - 0.5) * 2,
+                (Math.random() - 0.5) * 2
+            );
+            group.add(detail);
+        }
+        
+        // Add wireframe
         const edges = new THREE.EdgesGeometry(geometry);
         const edgeMaterial = new THREE.LineBasicMaterial({ 
             color: 0xffffff, 
@@ -171,9 +256,10 @@ class ModelViewer {
             transparent: true 
         });
         const wireframe = new THREE.LineSegments(edges, edgeMaterial);
-        model.add(wireframe);
+        group.add(wireframe);
         
-        return model;
+        console.log(`Modelo fallback ${index} creado`);
+        return group;
     }
     
     setupModelProperties(model, index) {
@@ -256,7 +342,7 @@ class ModelViewer {
                 const action = mixer.clipAction(clip);
                 action.setLoop(THREE.LoopRepeat);
                 action.play();
-                console.log(`Reproduciendo animación ${clipIndex + 1} para ${this.modelPrefix}${index + 1}`);
+                console.log(`Reproduciendo animación ${clipIndex + 1} para modelo ${index + 1}`);
             });
         }
     }
@@ -311,7 +397,7 @@ class ModelViewer {
         loadingDiv.className = 'model-loading';
         loadingDiv.innerHTML = `
             <div class="loading-spinner"></div>
-            Cargando modelos...
+            Preparando visualizador...
         `;
         container.appendChild(loadingDiv);
         this.updateControls();
@@ -358,6 +444,10 @@ class ModelViewer {
 document.addEventListener('DOMContentLoaded', () => {
     // Wait a bit to ensure all elements are loaded
     setTimeout(() => {
-        new ModelViewer();
+        try {
+            new ModelViewer();
+        } catch (error) {
+            console.error('Error inicializando ModelViewer:', error);
+        }
     }, 100);
 });
