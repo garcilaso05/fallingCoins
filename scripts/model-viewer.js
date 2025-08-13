@@ -30,10 +30,10 @@ class ModelViewer {
         // Create scene
         this.scene = new THREE.Scene();
         
-        // Create camera
+        // Create camera - AJUSTAR POSICIÓN PARA MEJOR VISTA
         this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-        this.camera.position.set(0, 1, 4);
-        this.camera.lookAt(0, 0, 0);
+        this.camera.position.set(0, 1.5, 4); // Subir un poco la cámara
+        this.camera.lookAt(0, 0.5, 0); // Mirar hacia el centro del modelo
         
         // Create renderer
         this.renderer = new THREE.WebGLRenderer({ 
@@ -47,23 +47,23 @@ class ModelViewer {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         container.appendChild(this.renderer.domElement);
         
-        // Add lights
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        // Add lights - MEJORAR ILUMINACIÓN
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         this.scene.add(ambientLight);
         
         const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight1.position.set(5, 5, 5);
+        directionalLight1.position.set(5, 8, 5);
         directionalLight1.castShadow = true;
         directionalLight1.shadow.mapSize.width = 2048;
         directionalLight1.shadow.mapSize.height = 2048;
         this.scene.add(directionalLight1);
         
-        const directionalLight2 = new THREE.DirectionalLight(0x4488ff, 0.3);
-        directionalLight2.position.set(-5, -3, 2);
+        const directionalLight2 = new THREE.DirectionalLight(0x4488ff, 0.4);
+        directionalLight2.position.set(-5, 2, -3);
         this.scene.add(directionalLight2);
         
-        const directionalLight3 = new THREE.DirectionalLight(0xff6644, 0.2);
-        directionalLight3.position.set(2, -5, -3);
+        const directionalLight3 = new THREE.DirectionalLight(0xff6644, 0.3);
+        directionalLight3.position.set(2, -2, -5);
         this.scene.add(directionalLight3);
         
         // Start animation loop
@@ -246,10 +246,10 @@ class ModelViewer {
         // Create a more interesting fallback
         const group = new THREE.Group();
         
-        // Main shape - TAMAÑOS MUCHO MÁS PEQUEÑOS
+        // Main shape - TAMAÑOS CONSISTENTES
         const geometry = this.modelPrefix === 'M' ? 
-            new THREE.SphereGeometry(0.6, 16, 16) : // Esferas muy pequeñas para mascotas
-            new THREE.BoxGeometry(0.8, 0.8, 0.8);   // Cubos muy pequeños para SQL
+            new THREE.SphereGeometry(1.0, 16, 16) : // Esferas estándar para mascotas
+            new THREE.BoxGeometry(1.2, 1.2, 1.2);   // Cubos estándar para SQL
             
         const material = new THREE.MeshPhongMaterial({ 
             color: colors[(index - 1) % colors.length],
@@ -261,8 +261,8 @@ class ModelViewer {
         mainMesh.receiveShadow = true;
         group.add(mainMesh);
         
-        // Add some details - también muy pequeños
-        const detailGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+        // Add some details - proporcionales
+        const detailGeometry = new THREE.SphereGeometry(0.15, 8, 8);
         const detailMaterial = new THREE.MeshPhongMaterial({ 
             color: 0xffffff,
             opacity: 0.8,
@@ -272,9 +272,9 @@ class ModelViewer {
         for (let i = 0; i < 3; i++) {
             const detail = new THREE.Mesh(detailGeometry, detailMaterial);
             detail.position.set(
-                (Math.random() - 0.5) * 1.0, // Rango muy pequeño
-                (Math.random() - 0.5) * 1.0,
-                (Math.random() - 0.5) * 1.0
+                (Math.random() - 0.5) * 1.5,
+                (Math.random() - 0.5) * 1.5,
+                (Math.random() - 0.5) * 1.5
             );
             group.add(detail);
         }
@@ -289,7 +289,7 @@ class ModelViewer {
         const wireframe = new THREE.LineSegments(edges, edgeMaterial);
         group.add(wireframe);
         
-        console.log(`🎨 Modelo fallback ${index} creado (tamaño muy reducido)`);
+        console.log(`🎨 Modelo fallback ${index} (${this.modelPrefix}) creado - tamaño equilibrado`);
         return group;
     }
     
@@ -307,28 +307,28 @@ class ModelViewer {
         const center = box.getCenter(new THREE.Vector3());
         model.position.sub(center);
         
-        // Scale appropriately - ESCALADO AGRESIVO PARA MODELOS GRANDES
+        // Scale appropriately - ESCALADO BALANCEADO
         const size = box.getSize(new THREE.Vector3());
         const maxDimension = Math.max(size.x, size.y, size.z);
         
-        // Tamaños objetivo mucho más pequeños
+        // Tamaños objetivo balanceados entre sí
         let targetSize;
         if (this.modelPrefix === 'M') {
-            targetSize = 1.2; // Mascotas muy pequeñas
+            targetSize = 2.0; // Mascotas un poco más grandes
         } else if (this.modelPrefix === 'SQL') {
-            targetSize = 1.5; // Objetos SQL pequeños
+            targetSize = 1.8; // Objetos SQL un poco más pequeños
         } else {
-            targetSize = 1.3; // Por defecto pequeño
+            targetSize = 1.9; // Por defecto equilibrado
         }
         
-        // APLICAR ESCALADO AGRESIVO - siempre escalar sin excepciones
+        // APLICAR ESCALADO FORZADO - siempre escalar
         const scale = targetSize / maxDimension;
         model.scale.setScalar(scale);
         
-        console.log(`📏 Modelo ${index + 1}: Tamaño original ${maxDimension.toFixed(2)} → Escalado a ${targetSize} (factor: ${scale.toFixed(3)})`);
+        console.log(`📏 Modelo ${index + 1} (${this.modelPrefix}): Original ${maxDimension.toFixed(2)} → Target ${targetSize} → Escala ${scale.toFixed(3)}`);
         
-        // Position centered and slightly above ground
-        model.position.y = 0.1; // Posición fija más segura
+        // Position centered and at ground level
+        model.position.y = 0; // Al nivel del suelo para evitar ver pies flotando
         model.position.x = 0;
         model.position.z = 0;
         
