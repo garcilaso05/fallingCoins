@@ -15,7 +15,7 @@ class SQLViewer {
         // Animation control
         this.animationsPlaying = true;
         this.animationSpeed = 1.0;
-        this.modelScale = 1.0;
+        this.modelScale = 0.2;
         
         // Mouse controls for rotation
         this.mouseX = 0;
@@ -163,7 +163,7 @@ class SQLViewer {
         
         sizeSlider.addEventListener('input', (e) => {
             this.modelScale = parseFloat(e.target.value);
-            sizeValue.textContent = `${this.modelScale.toFixed(1)}x`;
+            sizeValue.textContent = `${this.modelScale.toFixed(2)}x`;
             this.updateModelScale();
         });
         
@@ -385,9 +385,9 @@ class SQLViewer {
         
         model.position.sub(center);
         
-        // Scale to fit viewer
+        // Scale to fit viewer - MUCH SMALLER BASE SIZE
         const maxDimension = Math.max(size.x, size.y, size.z);
-        const targetSize = 2.5;
+        const targetSize = 0.9; // Reduced from 2.5 to 1.0
         
         if (maxDimension > 0) {
             const scale = targetSize / maxDimension;
@@ -401,7 +401,7 @@ class SQLViewer {
         
         model.visible = false;
         
-        console.log(`📏 Modelo SQL ${index + 1} configurado`);
+        console.log(`📏 Modelo SQL ${index + 1} configurado con tamaño base reducido`);
     }
     
     showModel(index) {
