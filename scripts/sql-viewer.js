@@ -15,7 +15,7 @@ class SQLViewer {
         // Animation control
         this.animationsPlaying = true;
         this.animationSpeed = 1.0;
-        this.modelScale = 0.3;
+        this.modelScale = 0.1; // Changed from 0.3 to 0.1 (which will display as 1.0x)
         this.baseScales = []; // Store original scales for each model
         
         // Mouse controls for rotation
@@ -158,15 +158,21 @@ class SQLViewer {
             this.nextModel();
         });
         
-        // Size control
+        // Size control - FIXED SCALING DISPLAY
         const sizeSlider = document.getElementById('size-slider');
         const sizeValue = document.getElementById('size-value');
         
         sizeSlider.addEventListener('input', (e) => {
             this.modelScale = parseFloat(e.target.value);
-            sizeValue.textContent = `${this.modelScale.toFixed(2)}x`;
+            // Display scale multiplied by 10 to show 0.1 as 1.0x
+            const displayScale = this.modelScale * 10;
+            sizeValue.textContent = `${displayScale.toFixed(1)}x`;
             this.updateModelScale();
         });
+        
+        // Initialize the display value correctly
+        const initialDisplayScale = this.modelScale * 10;
+        sizeValue.textContent = `${initialDisplayScale.toFixed(1)}x`;
         
         // Animation controls
         document.getElementById('play-pause-btn').addEventListener('click', () => {
@@ -397,14 +403,15 @@ class SQLViewer {
             this.baseScales[index] = scale;
         }
         
-        // Position at ground level
+        // Position at MIDDLE HEIGHT instead of ground level
         const scaledBox = new THREE.Box3().setFromObject(model);
-        const minY = scaledBox.min.y;
-        model.position.y -= minY;
+        const boxCenter = scaledBox.getCenter(new THREE.Vector3());
+        // Position model so its center is at y=0, not its bottom
+        model.position.y = -boxCenter.y;
         
         model.visible = false;
         
-        console.log(`📏 Modelo SQL ${index + 1} configurado con tamaño base reducido`);
+        console.log(`📏 Modelo SQL ${index + 1} configurado con tamaño base reducido y centrado verticalmente`);
     }
     
     showModel(index) {
