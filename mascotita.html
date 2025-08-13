@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mascotita - Modelos 3D Generados con IA</title>
+    <link rel="stylesheet" href="styles/common.css">
+    <link rel="stylesheet" href="styles/viewer-page.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation Header -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <div class="logo-icon">
+                    <i class="fas fa-cube"></i>
+                </div>
+                <span class="logo-text">3D Showcase</span>
+            </div>
+            <ul class="nav-menu" id="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">Moneda 3D</a>
+                </li>
+                <li class="nav-item">
+                    <a href="minisql.html" class="nav-link">miniSQL</a>
+                </li>
+                <li class="nav-item active">
+                    <a href="mascotita.html" class="nav-link">Mascotita</a>
+                </li>
+                <li class="nav-item">
+                    <a href="minecraft.html" class="nav-link">Minecraft</a>
+                </li>
+            </ul>
+            <div class="nav-buttons">
+                <a href="https://github.com/garcilaso05/" target="_blank" class="btn-primary">
+                    <i class="fab fa-github"></i>
+                    GitHub
+                </a>
+            </div>
+            <div class="hamburger" id="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-background">
+            <div class="floating-shapes">
+                <div class="shape shape-1"></div>
+                <div class="shape shape-2"></div>
+                <div class="shape shape-3"></div>
+                <div class="shape shape-4"></div>
+            </div>
+        </div>
+        
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="title-line fade-in-up" style="animation-delay: 0.2s">Mascotita</span>
+                    <span class="title-highlight fade-in-up" style="animation-delay: 0.4s">Creada con</span>
+                    <span class="title-line fade-in-up" style="animation-delay: 0.6s">Meshy.ai</span>
+                </h1>
+                
+                <p class="hero-subtitle fade-in-up" style="animation-delay: 1.2s">
+                    Adorables mascotas 3D generadas, texturizadas y animadas 
+                    completamente con inteligencia artificial.
+                </p>
+            </div>
+            
+            <div class="hero-visual">
+                <div class="model-viewer-container">
+                    <div class="model-viewer" id="model-viewer"></div>
+                    <div class="model-controls">
+                        <button class="control-btn" id="prev-btn">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <div class="model-info">
+                            <span class="model-name" id="model-name">M1</span>
+                            <span class="model-counter" id="model-counter">1 / 5</span>
+                        </div>
+                        <button class="control-btn" id="next-btn">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Info Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Colección Mascotitas</h2>
+                <p class="section-subtitle">
+                    5 adorables mascotas generadas con IA, cada una con personalidad única
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="GLTFLoader.js"></script>
+    <script src="scripts/common.js"></script>
+    <script src="scripts/model-viewer.js" data-models="M" data-count="5"></script>
+</body>
+</html>

@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>easySQL - Transforma Excel en Bases de Datos Potentes</title>
+    <title>3D Showcase - Experiencias Interactivas en Three.js</title>
     <link rel="stylesheet" href="styles/common.css">
-    <link rel="stylesheet" href="styles/home.css">
+    <link rel="stylesheet" href="styles/coins-page.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -15,27 +15,29 @@
         <div class="nav-container">
             <div class="nav-logo">
                 <div class="logo-icon">
-                    <i class="fas fa-database"></i>
+                    <i class="fas fa-cube"></i>
                 </div>
-                <span class="logo-text">easySQL</span>
+                <span class="logo-text">3D Showcase</span>
             </div>
             <ul class="nav-menu" id="nav-menu">
                 <li class="nav-item active">
-                    <a href="index.html" class="nav-link">Bienvenida</a>
+                    <a href="index.html" class="nav-link">Moneda 3D</a>
                 </li>
                 <li class="nav-item">
-                    <a href="quienes-somos.html" class="nav-link">Quiénes Somos</a>
+                    <a href="minisql.html" class="nav-link">miniSQL</a>
                 </li>
                 <li class="nav-item">
-                    <a href="porque-usar-easysql.html" class="nav-link">¿Por qué usar easySQL?</a>
+                    <a href="mascotita.html" class="nav-link">Mascotita</a>
                 </li>
                 <li class="nav-item">
-                    <a href="como-empezar.html" class="nav-link">¿Cómo Empezar?</a>
+                    <a href="minecraft.html" class="nav-link">Minecraft</a>
                 </li>
             </ul>
             <div class="nav-buttons">
-                <button class="btn-secondary">Iniciar Sesión</button>
-                <button class="btn-primary pulse-animation">Empezar Gratis</button>
+                <a href="https://github.com/garcilaso05/" target="_blank" class="btn-primary">
+                    <i class="fab fa-github"></i>
+                    GitHub
+                </a>
             </div>
             <div class="hamburger" id="hamburger">
                 <span class="bar"></span>
@@ -45,190 +47,189 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero" id="hero">
-        <div class="hero-background">
-            <div class="floating-shapes">
-                <div class="shape shape-1"></div>
-                <div class="shape shape-2"></div>
-                <div class="shape shape-3"></div>
-                <div class="shape shape-4"></div>
+    <!-- Main Container with Coins -->
+    <div class="page-container">
+        <div class="content">
+            <div class="hero-section">
+                <h1 class="page-title">
+                    <span class="title-highlight">Moneda 3D</span>
+                    <span class="title-line">Creada en Vectary.com</span>
+                </h1>
+                <p class="page-subtitle">
+                    Una demostración de animación 3D sincronizada con scroll. 
+                    La moneda gira y cambia según navegas por la página.
+                </p>
             </div>
+            
+            <div class="section">
+                <p class="intro-text">
+                    Esta página muestra una moneda 3D que sigue tu scroll de manera fluida. 
+                    Cada sección tiene su propia moneda con colores diferentes que representan 
+                    los conceptos técnicos explicados.
+                </p>
+                
+                <p class="intro-text">
+                    La moneda está modelada en Vectary.com y animada con Three.js. 
+                    Puedes tocar o hacer clic en ella para pausar la rotación.
+                </p>
+            </div>
+            
+            <div class="section">
+                <h2 class="section-heading">
+                    <i class="fas fa-cogs section-icon"></i>
+                    Animación con Scroll
+                </h2>
+                <div class="content-block">
+                    <p>
+                        El sistema calcula la posición de cada título y hace que la moneda 
+                        rote de 0° a 180° mientras haces scroll entre secciones.
+                    </p>
+                    
+                    <div class="highlight-box">
+                        <h4><i class="fas fa-calculator"></i> Cálculo en Tiempo Real</h4>
+                        <p>
+                            La posición del scroll se convierte en ángulos de rotación matemáticamente. 
+                            Todo funciona a 60fps para que se vea suave.
+                        </p>
+                    </div>
+                    
+                    <p>
+                        Cuando la moneda llega a 180° (de canto), cambia automáticamente 
+                        por la siguiente moneda del grupo, creando una transición fluida.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2 class="section-heading">
+                    <i class="fas fa-hand-pointer section-icon"></i>
+                    Interacción Táctil
+                </h2>
+                <div class="content-block">
+                    <p>
+                        Puedes tocar o hacer clic en la moneda para controlar su velocidad 
+                        de rotación. Funciona tanto en computadora como en móvil.
+                    </p>
+                    
+                    <div class="comparison-grid">
+                        <div class="comparison-item excel">
+                            <h4><i class="fas fa-mouse-pointer"></i> Control Manual</h4>
+                            <ul>
+                                <li>Clic para pausar</li>
+                                <li>Suelta para continuar</li>
+                                <li>Transición suave</li>
+                                <li>Respuesta inmediata</li>
+                            </ul>
+                        </div>
+                        <div class="comparison-item easysql">
+                            <h4><i class="fas fa-mobile-alt"></i> Compatible Móvil</h4>
+                            <ul>
+                                <li>Touch nativo</li>
+                                <li>Sin interferir scroll</li>
+                                <li>Área amplia de toque</li>
+                                <li>Optimizado para tablets</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <p>
+                        El sistema detecta si estás en móvil o computadora y ajusta 
+                        automáticamente la forma de interactuar con la moneda.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2 class="section-heading">
+                    <i class="fas fa-palette section-icon"></i>
+                    Renderizado Visual
+                </h2>
+                <div class="content-block">
+                    <p>
+                        La moneda usa materiales metálicos realistas con luces que 
+                        crean reflejos y sombras para que se vea como una moneda real.
+                    </p>
+                    
+                    <div class="security-features">
+                        <div class="security-item">
+                            <i class="fas fa-lightbulb"></i>
+                            <h4>Iluminación</h4>
+                            <p>Luces direccionales y ambiente</p>
+                        </div>
+                        <div class="security-item">
+                            <i class="fas fa-gem"></i>
+                            <h4>Material Metálico</h4>
+                            <p>Reflejos realistas</p>
+                        </div>
+                        <div class="security-item">
+                            <i class="fas fa-eye"></i>
+                            <h4>Sombras</h4>
+                            <p>Efectos de profundidad</p>
+                        </div>
+                        <div class="security-item">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <h4>60 FPS</h4>
+                            <p>Fluidez constante</p>
+                        </div>
+                    </div>
+                    
+                    <p>
+                        Todo está optimizado para funcionar rápido en cualquier dispositivo, 
+                        desde móviles hasta computadoras potentes.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2 class="section-heading">
+                    <i class="fas fa-code section-icon"></i>
+                    Tecnología Utilizada
+                </h2>
+                <div class="content-block">
+                    <p>
+                        El proyecto está construido con tecnologías web modernas 
+                        para crear una experiencia 3D fluida en el navegador.
+                    </p>
+                    
+                    <div class="roi-calculator">
+                        <h4><i class="fas fa-microchip"></i> Stack Técnico</h4>
+                        <div class="roi-items">
+                            <div class="roi-item savings">
+                                <span class="roi-label">Modelado 3D:</span>
+                                <span class="roi-value">Vectary.com</span>
+                            </div>
+                            <div class="roi-item savings">
+                                <span class="roi-label">Librería 3D:</span>
+                                <span class="roi-value">Three.js r128</span>
+                            </div>
+                            <div class="roi-item savings">
+                                <span class="roi-label">Renderizado:</span>
+                                <span class="roi-value">WebGL 2.0</span>
+                            </div>
+                            <div class="roi-item total">
+                                <span class="roi-label">Performance:</span>
+                                <span class="roi-value">60 FPS</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p>
+                        El código está organizado de forma limpia y tiene sistemas 
+                        de respaldo para funcionar incluso si algo falla.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="spacer"></div>
         </div>
         
-        <div class="hero-container">
-            <div class="hero-content">
-                <h1 class="hero-title">
-                    <span class="title-line fade-in-up" style="animation-delay: 0.2s">Transforma tu</span>
-                    <span class="title-highlight fade-in-up" style="animation-delay: 0.4s">Excel</span>
-                    <span class="title-line fade-in-up" style="animation-delay: 0.6s">en una</span>
-                    <span class="title-highlight fade-in-up" style="animation-delay: 0.8s">Base de Datos</span>
-                    <span class="title-line fade-in-up" style="animation-delay: 1s">Potente</span>
-                </h1>
-                
-                <p class="hero-subtitle fade-in-up" style="animation-delay: 1.2s">
-                    Sin código, sin complicaciones. easySQL convierte tus hojas de cálculo en 
-                    bases de datos relacionales profesionales en minutos.
-                </p>
-                
-                <div class="hero-buttons fade-in-up" style="animation-delay: 1.4s">
-                    <button class="btn-hero-primary">
-                        <i class="fas fa-rocket"></i>
-                        Empezar Gratis
-                    </button>
-                    <button class="btn-hero-secondary">
-                        <i class="fas fa-play"></i>
-                        Ver Demo
-                    </button>
-                </div>
-                
-                <div class="hero-stats fade-in-up" style="animation-delay: 1.6s">
-                    <div class="stat">
-                        <div class="stat-number">10,000+</div>
-                        <div class="stat-label">Empresas confían en nosotros</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-number">5 min</div>
-                        <div class="stat-label">Tiempo promedio de migración</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-number">99.9%</div>
-                        <div class="stat-label">Disponibilidad garantizada</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="hero-visual">
-                <div class="visual-container fade-in-right" style="animation-delay: 0.8s">
-                    <div class="excel-card">
-                        <div class="card-header">
-                            <i class="fas fa-file-excel excel-icon"></i>
-                            <span>ventas_2024.xlsx</span>
-                        </div>
-                        <div class="card-content">
-                            <div class="excel-grid">
-                                <div class="grid-cell">Cliente</div>
-                                <div class="grid-cell">Producto</div>
-                                <div class="grid-cell">Cantidad</div>
-                                <div class="grid-cell">Precio</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="transform-arrow">
-                        <i class="fas fa-arrow-right"></i>
-                        <div class="transform-text">Transforma en 5 min</div>
-                    </div>
-                    
-                    <div class="database-card">
-                        <div class="card-header">
-                            <i class="fas fa-database db-icon"></i>
-                            <span>Base de Datos SQL</span>
-                        </div>
-                        <div class="card-content">
-                            <div class="db-features">
-                                <div class="feature"><i class="fas fa-check"></i> Relaciones automáticas</div>
-                                <div class="feature"><i class="fas fa-check"></i> Consultas optimizadas</div>
-                                <div class="feature"><i class="fas fa-check"></i> Escalabilidad infinita</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="features" id="features">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">¿Por qué elegir easySQL?</h2>
-                <p class="section-subtitle">
-                    La solución más completa para evolucionar de Excel a bases de datos profesionales
-                </p>
-            </div>
-            
-            <div class="features-grid">
-                <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
-                    <div class="feature-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <h3>Ahorra Tiempo</h3>
-                    <p>De semanas de desarrollo a minutos de configuración automática</p>
-                </div>
-                
-                <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
-                    <div class="feature-icon">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <h3>Máxima Seguridad</h3>
-                    <p>Encriptación extremo a extremo y cumplimiento GDPR garantizado</p>
-                </div>
-                
-                <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
-                    <div class="feature-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h3>Escalabilidad</h3>
-                    <p>Crece con tu negocio sin límites de tamaño o rendimiento</p>
-                </div>
-                
-                <div class="feature-card" data-aos="fade-up" data-aos-delay="400">
-                    <div class="feature-icon">
-                        <i class="fas fa-coins"></i>
-                    </div>
-                    <h3>ROI Inmediato</h3>
-                    <p>Recupera tu inversión en las primeras semanas de uso</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta">
-        <div class="container">
-            <div class="cta-content">
-                <h2>¿Listo para transformar tus datos?</h2>
-                <p>Únete a miles de empresas que ya evolucionaron de Excel a easySQL</p>
-                <div class="cta-buttons">
-                    <button class="btn-cta-primary">
-                        <i class="fas fa-rocket"></i>
-                        Comenzar Ahora
-                    </button>
-                    <button class="btn-cta-secondary">
-                        <i class="fas fa-calendar-alt"></i>
-                        Agendar Demo
-                    </button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-logo">
-                    <div class="logo-icon">
-                        <i class="fas fa-database"></i>
-                    </div>
-                    <span class="logo-text">easySQL</span>
-                </div>
-                <div class="footer-links">
-                    <a href="#">Términos</a>
-                    <a href="#">Privacidad</a>
-                    <a href="#">Soporte</a>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2024 easySQL. Todos los derechos reservados.</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Scripts -->
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+        <!-- Coin Animation Container -->
+        <div class="coin-container" id="coin-container"></div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="scripts/common.js"></script>
-    <script src="scripts/home.js"></script>
+    <script src="coin-animation.js"></script>
 </body>
 </html>

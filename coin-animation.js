@@ -365,20 +365,20 @@ function createFallbackCoins() {
     console.log('Creando monedas de respaldo inmediatamente...');
     
     const coinData = [
-        { color: 0xffd700, name: 'LOGO EMPRESA' },     // 1. Logo empresa (dorado)
-        { color: 0x4a90e2, name: 'TIEMPO' },          // 2. Reloj - ahorrar tiempo (azul)
-        { color: 0x228b22, name: 'EXCEL' },           // 3. Excel - lo que evitamos (verde)
-        { color: 0x8b4513, name: 'SEGURIDAD' },       // 4. Candado - seguridad (marrón/bronce)
-        { color: 0xdaa520, name: 'LINGOTES' }         // 5. Lingotes - ahorrar dinero (oro)
+        { color: 0x3b82f6, name: 'SISTEMA ANIMACIÓN' },     // 1. Sistema de animación (azul)
+        { color: 0x10b981, name: 'INTERACCIONES' },         // 2. Interacciones táctiles (verde)
+        { color: 0x8b5cf6, name: 'DISEÑO VISUAL' },         // 3. Diseño visual (púrpura)
+        { color: 0xf59e0b, name: 'ARQUITECTURA' },          // 4. Arquitectura técnica (dorado)
+        { color: 0x6366f1, name: 'EXPLORACIÓN' }            // 5. Exploración (índigo)
     ];
     
-    for (let i = 0; i < 5; i++) { // Cambié de 6 a 5 monedas
+    for (let i = 0; i < 5; i++) {
         createFallbackCoin(i, coinData[i]);
     }
     
     coinsReady = true;
     setupInitialCoin();
-    console.log('5 monedas de respaldo creadas y listas (Logo, Tiempo, Excel, Seguridad, Lingotes)');
+    console.log('5 monedas de demostración creadas y listas');
 }
 
 function createFallbackCoin(index, data) {
