@@ -29,6 +29,16 @@ class ModelViewer {
         
         console.log(`Inicializando ModelViewer: ${this.modelPrefix}, count: ${this.modelCount}`);
         
+        // Mouse controls for rotation and movement
+        this.mouseX = 0;
+        this.mouseY = 0;
+        this.targetRotationX = 0;
+        this.targetRotationY = 0;
+        this.currentRotationX = 0;
+        this.currentRotationY = 0;
+        this.isMouseDown = false;
+        this.isDragging = false;
+        
         this.init();
         this.setupControls();
         this.startLoadingModels();
@@ -40,9 +50,9 @@ class ModelViewer {
         // Create scene
         this.scene = new THREE.Scene();
         
-        // Create camera - AJUSTAR POSICIÓN PARA MEJOR VISTA
+        // Create camera - INCREASE DISTANCE FOR BETTER MODEL FITTING
         this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-        this.camera.position.set(0, 1.2, this.baseCameraZ);
+        this.camera.position.set(0, 1.2, this.baseCameraZ * 1.5); // Increased distance by 50%
         this.camera.lookAt(0, 0.5, 0);
         
         // Create renderer
@@ -81,6 +91,81 @@ class ModelViewer {
         
         // Handle window resize
         window.addEventListener('resize', () => this.onWindowResize());
+        
+        // Setup mouse controls
+        this.setupMouseControls();
+    }
+    
+    setupMouseControls() {
+        const container = document.getElementById('model-viewer');
+        
+        container.addEventListener('mousedown', (e) => {
+            this.isMouseDown = true;
+            this.isDragging = false;
+            this.mouseX = e.clientX;
+            this.mouseY = e.clientY;
+        });
+        
+        container.addEventListener('mousemove', (e) => {
+            if (!this.isMouseDown) return;
+            
+            this.isDragging = true;
+            const deltaX = e.clientX - this.mouseX;
+            const deltaY = e.clientY - this.mouseY;
+            
+            this.targetRotationY += deltaX * 0.01;
+            this.targetRotationX += deltaY * 0.01;
+            
+            // Clamp X rotation
+            this.targetRotationX = Math.max(-Math.PI/3, Math.min(Math.PI/3, this.targetRotationX));
+            
+            this.mouseX = e.clientX;
+            this.mouseY = e.clientY;
+        });
+        
+        container.addEventListener('mouseup', () => {
+            this.isMouseDown = false;
+            this.isDragging = false;
+        });
+        
+        container.addEventListener('mouseleave', () => {
+            this.isMouseDown = false;
+            this.isDragging = false;
+        });
+        
+        // Touch events
+        container.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            this.isMouseDown = true;
+            this.isDragging = false;
+            this.mouseX = touch.clientX;
+            this.mouseY = touch.clientY;
+        });
+        
+        container.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (!this.isMouseDown) return;
+            
+            this.isDragging = true;
+            const touch = e.touches[0];
+            const deltaX = touch.clientX - this.mouseX;
+            const deltaY = touch.clientY - this.mouseY;
+            
+            this.targetRotationY += deltaX * 0.01;
+            this.targetRotationX += deltaY * 0.01;
+            
+            this.targetRotationX = Math.max(-Math.PI/3, Math.min(Math.PI/3, this.targetRotationX));
+            
+            this.mouseX = touch.clientX;
+            this.mouseY = touch.clientY;
+        });
+        
+        container.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.isMouseDown = false;
+            this.isDragging = false;
+        });
     }
     
     setupControls() {
@@ -110,6 +195,9 @@ class ModelViewer {
                 this.nextModel();
             }
         });
+        
+        // Setup mouse controls
+        this.setupMouseControls();
     }
     
     startLoadingModels() {
@@ -312,7 +400,7 @@ class ModelViewer {
             }
         });
         
-        // --- Normalización de escala (reemplaza lógica anterior) ---
+        // --- Normalización de escala (REDUCE SIZE FOR BETTER FITTING) ---
         // Centrar
         const box = new THREE.Box3().setFromObject(model);
         const center = box.getCenter(new THREE.Vector3());
@@ -321,8 +409,9 @@ class ModelViewer {
         const size = box.getSize(new THREE.Vector3());
         const maxDimension = Math.max(size.x, size.y, size.z) || 1;
         
-        // Target según prefijo
-        const target = this.normalizationTargets[this.modelPrefix] || this.normalizationTargets.default;
+        // Target según prefijo - REDUCE M SIZE
+        const targetAdjustment = this.modelPrefix === 'M' ? 0.8 : 1.0; // 20% smaller for mascots
+        const target = (this.normalizationTargets[this.modelPrefix] || this.normalizationTargets.default) * targetAdjustment;
         const scale = target / maxDimension;
         model.scale.setScalar(scale);
         
@@ -489,12 +578,20 @@ class ModelViewer {
         
         const delta = this.clock.getDelta();
         
-        // Update animations - SOLO LAS ANIMACIONES DEL GLB, NO ROTACIÓN MANUAL
+        // Update animations - SOLO LAS ANIMACIONES DEL GLB
         if (this.mixers[this.currentIndex]) {
             this.mixers[this.currentIndex].update(delta);
         }
         
-        // NO rotar manualmente el modelo - solo reproducir animaciones programadas
+        // Apply mouse rotation to current model
+        if (this.currentModel) {
+            // Smooth rotation interpolation
+            this.currentRotationX += (this.targetRotationX - this.currentRotationX) * 0.1;
+            this.currentRotationY += (this.targetRotationY - this.currentRotationY) * 0.1;
+            
+            this.currentModel.rotation.x = this.currentRotationX;
+            this.currentModel.rotation.y = this.currentRotationY;
+        }
         
         this.renderer.render(this.scene, this.camera);
     }
