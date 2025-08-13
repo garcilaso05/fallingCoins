@@ -246,10 +246,10 @@ class ModelViewer {
         // Create a more interesting fallback
         const group = new THREE.Group();
         
-        // Main shape - TAMAÑOS MÁS PEQUEÑOS PARA FALLBACKS
+        // Main shape - TAMAÑOS MUCHO MÁS PEQUEÑOS
         const geometry = this.modelPrefix === 'M' ? 
-            new THREE.SphereGeometry(0.8, 16, 16) : // Esferas más pequeñas para mascotas
-            new THREE.BoxGeometry(1.0, 1.0, 1.0);   // Cubos más pequeños para SQL
+            new THREE.SphereGeometry(0.6, 16, 16) : // Esferas muy pequeñas para mascotas
+            new THREE.BoxGeometry(0.8, 0.8, 0.8);   // Cubos muy pequeños para SQL
             
         const material = new THREE.MeshPhongMaterial({ 
             color: colors[(index - 1) % colors.length],
@@ -261,8 +261,8 @@ class ModelViewer {
         mainMesh.receiveShadow = true;
         group.add(mainMesh);
         
-        // Add some details - también más pequeños
-        const detailGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+        // Add some details - también muy pequeños
+        const detailGeometry = new THREE.SphereGeometry(0.08, 8, 8);
         const detailMaterial = new THREE.MeshPhongMaterial({ 
             color: 0xffffff,
             opacity: 0.8,
@@ -272,9 +272,9 @@ class ModelViewer {
         for (let i = 0; i < 3; i++) {
             const detail = new THREE.Mesh(detailGeometry, detailMaterial);
             detail.position.set(
-                (Math.random() - 0.5) * 1.5, // Rango más pequeño
-                (Math.random() - 0.5) * 1.5,
-                (Math.random() - 0.5) * 1.5
+                (Math.random() - 0.5) * 1.0, // Rango muy pequeño
+                (Math.random() - 0.5) * 1.0,
+                (Math.random() - 0.5) * 1.0
             );
             group.add(detail);
         }
@@ -289,7 +289,7 @@ class ModelViewer {
         const wireframe = new THREE.LineSegments(edges, edgeMaterial);
         group.add(wireframe);
         
-        console.log(`🎨 Modelo fallback ${index} creado (tamaño reducido)`);
+        console.log(`🎨 Modelo fallback ${index} creado (tamaño muy reducido)`);
         return group;
     }
     
@@ -307,29 +307,30 @@ class ModelViewer {
         const center = box.getCenter(new THREE.Vector3());
         model.position.sub(center);
         
-        // Scale appropriately - ESCALADO MEJORADO
+        // Scale appropriately - ESCALADO AGRESIVO PARA MODELOS GRANDES
         const size = box.getSize(new THREE.Vector3());
         const maxDimension = Math.max(size.x, size.y, size.z);
         
-        // Tamaños objetivo más pequeños para que se vean bien
+        // Tamaños objetivo mucho más pequeños
         let targetSize;
         if (this.modelPrefix === 'M') {
-            targetSize = 1.8; // Mascotas más pequeñas
+            targetSize = 1.2; // Mascotas muy pequeñas
         } else if (this.modelPrefix === 'SQL') {
-            targetSize = 2.2; // Objetos SQL un poco más grandes
+            targetSize = 1.5; // Objetos SQL pequeños
         } else {
-            targetSize = 2.0; // Por defecto
+            targetSize = 1.3; // Por defecto pequeño
         }
         
-        // Aplicar escalado siempre para normalizar tamaños
+        // APLICAR ESCALADO AGRESIVO - siempre escalar sin excepciones
         const scale = targetSize / maxDimension;
         model.scale.setScalar(scale);
         
         console.log(`📏 Modelo ${index + 1}: Tamaño original ${maxDimension.toFixed(2)} → Escalado a ${targetSize} (factor: ${scale.toFixed(3)})`);
         
-        // Position slightly above ground, ajustado por la escala
-        const scaledCenter = center.clone().multiplyScalar(scale);
-        model.position.y = -scaledCenter.y + 0.1;
+        // Position centered and slightly above ground
+        model.position.y = 0.1; // Posición fija más segura
+        model.position.x = 0;
+        model.position.z = 0;
         
         // Initially hide
         model.visible = false;
