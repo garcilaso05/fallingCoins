@@ -6,10 +6,11 @@ class MinecraftViewer {
         this.models = [];
         this.currentIndex = 0;
         this.currentModel = null;
-        this.modelCount = 10;
+        this.modelCount = 5; // Cambiado a 5 modelos
         
         // Mouse/Touch controls
-        this.isMouseDown = false;
+        this.isLeftMouseDown = false;
+        this.isRightMouseDown = false;
         this.mouseX = 0;
         this.mouseY = 0;
         this.targetRotationX = 0;
@@ -17,10 +18,10 @@ class MinecraftViewer {
         this.currentRotationX = 0;
         this.currentRotationY = 0;
         
-        // Hold-to-change system
+        // Hold-to-change system (solo clic derecho)
         this.isHolding = false;
         this.holdStartTime = 0;
-        this.holdDuration = 3000; // 3 seconds
+        this.holdDuration = 2000; // 2 segundos
         this.holdProgress = 0;
         this.isChanging = false;
         
@@ -76,15 +77,14 @@ class MinecraftViewer {
     
     setupControls() {
         const container = document.getElementById('minecraft-viewer');
-        const overlay = document.getElementById('viewer-overlay');
         
-        // Mouse events
+        // Mouse events - separar clic izquierdo y derecho
         container.addEventListener('mousedown', (e) => this.onMouseDown(e));
         container.addEventListener('mousemove', (e) => this.onMouseMove(e));
         container.addEventListener('mouseup', (e) => this.onMouseUp(e));
         container.addEventListener('mouseleave', (e) => this.onMouseUp(e));
         
-        // Touch events
+        // Touch events (solo rotación)
         container.addEventListener('touchstart', (e) => this.onTouchStart(e));
         container.addEventListener('touchmove', (e) => this.onTouchMove(e));
         container.addEventListener('touchend', (e) => this.onTouchEnd(e));
@@ -94,16 +94,21 @@ class MinecraftViewer {
     }
     
     onMouseDown(event) {
-        this.isMouseDown = true;
-        this.mouseX = event.clientX;
-        this.mouseY = event.clientY;
-        
-        // Start hold timer
-        this.startHold();
+        if (event.button === 0) { // Clic izquierdo - solo rotación
+            this.isLeftMouseDown = true;
+            this.mouseX = event.clientX;
+            this.mouseY = event.clientY;
+            console.log('🖱️ Clic izquierdo - modo rotación');
+        } else if (event.button === 2) { // Clic derecho - cambio de modelo
+            this.isRightMouseDown = true;
+            this.startHold();
+            console.log('🖱️ Clic derecho - iniciando hold para cambio');
+        }
     }
     
     onMouseMove(event) {
-        if (!this.isMouseDown) return;
+        // Solo rotar con clic izquierdo
+        if (!this.isLeftMouseDown) return;
         
         const deltaX = event.clientX - this.mouseX;
         const deltaY = event.clientY - this.mouseY;
@@ -119,22 +124,28 @@ class MinecraftViewer {
     }
     
     onMouseUp(event) {
-        this.isMouseDown = false;
-        this.stopHold();
+        if (event.button === 0) { // Clic izquierdo
+            this.isLeftMouseDown = false;
+            console.log('🖱️ Clic izquierdo liberado');
+        } else if (event.button === 2) { // Clic derecho
+            this.isRightMouseDown = false;
+            this.stopHold();
+            console.log('🖱️ Clic derecho liberado');
+        }
     }
     
     onTouchStart(event) {
         event.preventDefault();
         const touch = event.touches[0];
-        this.isMouseDown = true;
+        this.isLeftMouseDown = true; // Touch siempre rota
         this.mouseX = touch.clientX;
         this.mouseY = touch.clientY;
-        this.startHold();
+        console.log('👆 Touch iniciado - modo rotación');
     }
     
     onTouchMove(event) {
         event.preventDefault();
-        if (!this.isMouseDown) return;
+        if (!this.isLeftMouseDown) return;
         
         const touch = event.touches[0];
         const deltaX = touch.clientX - this.mouseX;
@@ -151,8 +162,8 @@ class MinecraftViewer {
     
     onTouchEnd(event) {
         event.preventDefault();
-        this.isMouseDown = false;
-        this.stopHold();
+        this.isLeftMouseDown = false;
+        console.log('👆 Touch terminado');
     }
     
     startHold() {
@@ -166,7 +177,7 @@ class MinecraftViewer {
         container.classList.add('holding');
         overlay.classList.add('active');
         
-        console.log('🖱️ Hold iniciado');
+        console.log('🖱️ Hold iniciado (clic derecho)');
     }
     
     stopHold() {
@@ -466,8 +477,10 @@ class MinecraftViewer {
     animate() {
         requestAnimationFrame(() => this.animate());
         
-        // Update hold progress
-        this.updateHoldProgress();
+        // Update hold progress solo si hay clic derecho
+        if (this.isRightMouseDown) {
+            this.updateHoldProgress();
+        }
         
         // Smooth rotation interpolation
         this.currentRotationX += (this.targetRotationX - this.currentRotationX) * 0.1;
