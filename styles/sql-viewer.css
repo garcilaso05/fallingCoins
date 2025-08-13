@@ -4,7 +4,7 @@
     padding-top: 80px;
 }
 
-/* Hero Section */
+/* Hero Section - FIX SPACING */
 .hero-section {
     position: relative;
     min-height: 60vh;
@@ -12,6 +12,7 @@
     align-items: center;
     overflow: hidden;
     background: var(--bg-primary);
+    padding-top: 60px; /* Add top padding to separate from navbar */
 }
 
 .hero-background {
@@ -96,6 +97,7 @@
     line-height: 1.1;
     margin-bottom: 30px;
     color: white;
+    margin-top: 40px; /* Add top margin for better spacing */
 }
 
 .title-line {
@@ -137,8 +139,9 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 50px;
     padding: 12px 20px;
-    color: white;
+    color: #1a1a1a; /* Change from white to dark text */
     font-weight: 500;
+    background: rgba(255, 255, 255, 0.9); /* Add white background for better contrast */
 }
 
 .feature-pill i {
@@ -242,7 +245,7 @@
     font-size: 14px;
 }
 
-/* Navigation Controls */
+/* Navigation Controls - FIX MODEL COUNTER COLOR */
 .navigation-controls {
     display: flex;
     align-items: center;
@@ -278,9 +281,13 @@
 }
 
 .model-counter {
-    color: white;
+    color: #1a1a1a; /* Change from white to dark text */
     font-weight: 600;
     font-size: 18px;
+    background: rgba(255, 255, 255, 0.9); /* Add white background */
+    padding: 8px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Size Control - FIX WHITE TEXT */
@@ -491,6 +498,11 @@
     
     .hero-title {
         font-size: 2.5rem;
+        margin-top: 20px; /* Reduce top margin on mobile */
+    }
+    
+    .hero-section {
+        padding-top: 40px; /* Reduce top padding on mobile */
     }
     
     .hero-features {

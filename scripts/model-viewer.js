@@ -52,7 +52,7 @@ class ModelViewer {
         
         // Create camera - INCREASE DISTANCE FOR BETTER MODEL FITTING
         this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-        this.camera.position.set(0, 1.2, this.baseCameraZ * 1.5); // Increased distance by 50%
+        this.camera.position.set(0, 1.2, this.baseCameraZ * 2.1); // Increased distance by 50%
         this.camera.lookAt(0, 0.5, 0);
         
         // Create renderer
