@@ -19,6 +19,13 @@ class ModelViewer {
         
         // Distancia base de cámara según tipo de modelo
         this.baseCameraZ = this.modelPrefix === 'SQL' ? 6 : 4;
+        // Config de normalización y margen
+        this.fitMargin = 1.15; // margen adicional (15%)
+        this.normalizationTargets = {
+            M: 2.2,      // ampliar mascotas
+            SQL: 1.4,    // reducir minisql grandes
+            default: 1.8
+        };
         
         console.log(`Inicializando ModelViewer: ${this.modelPrefix}, count: ${this.modelCount}`);
         
@@ -35,7 +42,6 @@ class ModelViewer {
         
         // Create camera - AJUSTAR POSICIÓN PARA MEJOR VISTA
         this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-        // Usar distancia configurable
         this.camera.position.set(0, 1.2, this.baseCameraZ);
         this.camera.lookAt(0, 0.5, 0);
         
@@ -306,41 +312,28 @@ class ModelViewer {
             }
         });
         
-        // 1. Centrar el modelo en torno al origen
+        // --- Normalización de escala (reemplaza lógica anterior) ---
+        // Centrar
         const box = new THREE.Box3().setFromObject(model);
         const center = box.getCenter(new THREE.Vector3());
-        model.position.sub(center); // Ahora el centro geométrico queda en (0,0,0)
+        model.position.sub(center);
         
-        // 2. Calcular tamaño máximo original
         const size = box.getSize(new THREE.Vector3());
         const maxDimension = Math.max(size.x, size.y, size.z) || 1;
         
-        // 3. Calcular dimensiones visibles con la cámara actual
-        const distance = this.camera.position.z; // Aproximación (modelo centrado en z=0)
-        const fovRad = THREE.MathUtils.degToRad(this.camera.fov * 0.5);
-        const visibleHeight = 2 * distance * Math.tan(fovRad);
-        const visibleWidth = visibleHeight * this.camera.aspect;
-        
-        // 4. Margen (fill ratio)
-        const fill = 0.85; // 85% del área visible
-        const maxFit = Math.min(visibleHeight, visibleWidth) * fill;
-        
-        // 5. Escala adaptativa
-        const scale = maxFit / maxDimension;
+        // Target según prefijo
+        const target = this.normalizationTargets[this.modelPrefix] || this.normalizationTargets.default;
+        const scale = target / maxDimension;
         model.scale.setScalar(scale);
         
-        // 6. Recalcular bounding box tras escalar para apoyar base en y=0
+        // Recalcular box tras escalar y apoyar base en y=0
         const scaledBox = new THREE.Box3().setFromObject(model);
         const minY = scaledBox.min.y;
-        model.position.y -= minY; // Base a y=0
+        model.position.y -= minY; // base al suelo
         
-        // 7. Guardar oculto inicialmente
         model.visible = false;
         
-        console.log(
-            `📏 [${this.modelPrefix}] Modelo ${index + 1}: maxDim=${maxDimension.toFixed(3)} ` +
-            `visH=${visibleHeight.toFixed(3)} visW=${visibleWidth.toFixed(3)} scale=${scale.toFixed(3)}`
-        );
+        console.log(`📏 Normalizado (${this.modelPrefix}) modelo ${index + 1}: max=${maxDimension.toFixed(3)} target=${target} scale=${scale.toFixed(3)}`);
     }
     
     showModel(index) {
@@ -371,8 +364,40 @@ class ModelViewer {
             this.updateUI();
             this.updateControls();
             
+            // Ajustar cámara para este modelo
+            this.adjustCameraToModel(this.currentModel);
+            
             console.log(`👁️ Mostrando modelo ${index + 1}: ${this.modelPrefix}${index + 1}`);
         }
+    }
+    
+    adjustCameraToModel(model) {
+        if (!model) return;
+        // Asegurar matrices actualizadas
+        model.updateWorldMatrix(true, true);
+        const box = new THREE.Box3().setFromObject(model);
+        const size = box.getSize(new THREE.Vector3());
+        
+        // Altura y anchura requeridas
+        const margin = this.fitMargin;
+        const halfY = (size.y * 0.5) * margin;
+        const halfX = (size.x * 0.5) * margin;
+        
+        const fovRad = THREE.MathUtils.degToRad(this.camera.fov * 0.5);
+        // Distancia necesaria por altura
+        const distY = halfY / Math.tan(fovRad);
+        // Por anchura (width = height * aspect => dist >= halfX / (tan(fov/2)*aspect))
+        const distX = halfX / (Math.tan(fovRad) * this.camera.aspect);
+        const requiredDist = Math.max(distY, distX);
+        
+        // Posición vertical cámara (ligeramente por encima del centro)
+        const camY = size.y * 0.4;
+        
+        // Colocar cámara (sin animación para simplicidad)
+        this.camera.position.set(0, camY, requiredDist + size.z * 0.1);
+        this.camera.lookAt(0, size.y * 0.4, 0);
+        
+        console.log(`🎥 Ajuste cámara: dist=${requiredDist.toFixed(3)} size=(${size.x.toFixed(2)},${size.y.toFixed(2)},${size.z.toFixed(2)}) aspect=${this.camera.aspect.toFixed(2)}`);
     }
     
     setupAnimations(index) {
@@ -480,6 +505,8 @@ class ModelViewer {
             this.camera.aspect = container.offsetWidth / container.offsetHeight;
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(container.offsetWidth, container.offsetHeight);
+            // Reajustar cámara al modelo actual tras cambio de aspecto
+            if (this.currentModel) this.adjustCameraToModel(this.currentModel);
         }
     }
 }
