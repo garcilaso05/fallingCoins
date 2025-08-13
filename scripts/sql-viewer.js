@@ -38,10 +38,10 @@ class SQLViewer {
         // Create scene
         this.scene = new THREE.Scene();
         
-        // Create camera - DRASTICALLY HIGHER POSITION FOR HUGE MODELS
+        // Create camera - EVEN HIGHER POSITION FOR HUGE MODELS
         this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-        this.camera.position.set(0, 8, 12); // Much higher Y and farther Z
-        this.camera.lookAt(0, 2, 0); // Look at a much higher point
+        this.camera.position.set(0, 15, 12); // Much higher Y position
+        this.camera.lookAt(0, 5, 0); // Look at a higher point as well
         
         // Create renderer
         this.renderer = new THREE.WebGLRenderer({ 
