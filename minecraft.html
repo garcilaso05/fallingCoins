@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minecraft - Próximamente</title>
+    <title>Minecraft - Modelos 3D Interactivos</title>
     <link rel="stylesheet" href="styles/common.css">
-    <link rel="stylesheet" href="styles/home.css">
+    <link rel="stylesheet" href="styles/minecraft-page.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -47,44 +47,77 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero" id="hero">
-        <div class="hero-background">
-            <div class="floating-shapes">
-                <div class="shape shape-1"></div>
-                <div class="shape shape-2"></div>
-                <div class="shape shape-3"></div>
-                <div class="shape shape-4"></div>
+    <!-- Main Container -->
+    <div class="minecraft-container">
+        <!-- Viewer Section -->
+        <section class="viewer-section">
+            <div class="minecraft-viewer" id="minecraft-viewer">
+                <div class="viewer-overlay" id="viewer-overlay">
+                    <div class="progress-ring" id="progress-ring">
+                        <svg viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" stroke="rgba(255,255,255,0.2)" stroke-width="2" fill="none"/>
+                            <circle cx="50" cy="50" r="45" id="progress-circle" stroke="#00ff88" stroke-width="3" fill="none" 
+                                    stroke-dasharray="283" stroke-dashoffset="283" transform="rotate(-90 50 50)"/>
+                        </svg>
+                    </div>
+                    <div class="hold-indicator" id="hold-indicator">
+                        <i class="fas fa-hand-pointer"></i>
+                        <span>Mantén pulsado para cambiar</span>
+                    </div>
+                </div>
             </div>
-        </div>
-        
-        <div class="hero-container">
+            
+            <div class="model-info-bar">
+                <div class="model-name" id="model-name">minecraft1</div>
+                <div class="model-counter" id="model-counter">1 / 10</div>
+                <div class="interaction-hint">
+                    <i class="fas fa-mouse"></i>
+                    <span>Arrastra para rotar • Mantén pulsado para cambiar</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Info Section -->
+        <section class="info-section">
             <div class="hero-content">
                 <h1 class="hero-title">
-                    <span class="title-line fade-in-up" style="animation-delay: 0.2s">Minecraft</span>
-                    <span class="title-highlight fade-in-up" style="animation-delay: 0.4s">Próximamente</span>
+                    <span class="title-line">Minecraft</span>
+                    <span class="title-highlight">Modelos 3D</span>
+                    <span class="title-line">Interactivos</span>
                 </h1>
                 
-                <p class="hero-subtitle fade-in-up" style="animation-delay: 1.2s">
-                    Experiencia 3D interactiva de Minecraft llegando pronto...
+                <p class="hero-subtitle">
+                    Explora una colección de modelos 3D de Minecraft con controles 
+                    de rotación manual y un sistema innovador de navegación por pulsación.
                 </p>
+                
+                <div class="feature-cards">
+                    <div class="feature-card">
+                        <i class="fas fa-mouse-pointer"></i>
+                        <h3>Control Total</h3>
+                        <p>Arrastra para rotar el modelo en cualquier dirección</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <i class="fas fa-hand-rock"></i>
+                        <h3>Cambio Intuitivo</h3>
+                        <p>Mantén pulsado 3 segundos para cambiar de modelo</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <i class="fas fa-cubes"></i>
+                        <h3>10 Modelos</h3>
+                        <p>Colección completa de elementos de Minecraft</p>
+                    </div>
+                </div>
             </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="features" id="features">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">En Desarrollo</h2>
-                <p class="section-subtitle">
-                    Trabajando en algo increíble relacionado con Minecraft
-                </p>
-            </div>
-        </div>
-    </section>
+        </section>
+    </div>
 
     <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="scripts/common.js"></script>
+    <script src="scripts/minecraft-viewer.js"></script>
 </body>
 </html>
