@@ -38,10 +38,10 @@ class SQLViewer {
         // Create scene
         this.scene = new THREE.Scene();
         
-        // Create camera
+        // Create camera - DRASTICALLY HIGHER POSITION FOR HUGE MODELS
         this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-        this.camera.position.set(0, 2, 6);
-        this.camera.lookAt(0, 0, 0);
+        this.camera.position.set(0, 8, 12); // Much higher Y and farther Z
+        this.camera.lookAt(0, 2, 0); // Look at a much higher point
         
         // Create renderer
         this.renderer = new THREE.WebGLRenderer({ 
@@ -403,15 +403,17 @@ class SQLViewer {
             this.baseScales[index] = scale;
         }
         
-        // Position at MIDDLE HEIGHT instead of ground level
+        // Position at CENTER HEIGHT - for huge models, center them properly
         const scaledBox = new THREE.Box3().setFromObject(model);
         const boxCenter = scaledBox.getCenter(new THREE.Vector3());
-        // Position model so its center is at y=0, not its bottom
-        model.position.y = -boxCenter.y;
+        const boxSize = scaledBox.getSize(new THREE.Vector3());
+        
+        // Position model center at a higher Y position to be in camera view
+        model.position.y = -boxCenter.y + (boxSize.y * 0.3); // Raise it significantly
         
         model.visible = false;
         
-        console.log(`📏 Modelo SQL ${index + 1} configurado con tamaño base reducido y centrado verticalmente`);
+        console.log(`📏 Modelo SQL ${index + 1} configurado con tamaño base reducido y cámara ajustada para modelos grandes`);
     }
     
     showModel(index) {
