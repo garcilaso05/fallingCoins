@@ -15,7 +15,8 @@ class SQLViewer {
         // Animation control
         this.animationsPlaying = true;
         this.animationSpeed = 1.0;
-        this.modelScale = 0.2;
+        this.modelScale = 0.3;
+        this.baseScales = []; // Store original scales for each model
         
         // Mouse controls for rotation
         this.mouseX = 0;
@@ -387,11 +388,13 @@ class SQLViewer {
         
         // Scale to fit viewer - MUCH SMALLER BASE SIZE
         const maxDimension = Math.max(size.x, size.y, size.z);
-        const targetSize = 0.9; // Reduced from 2.5 to 1.0
+        const targetSize = 1.0; // Reduced from 2.5 to 1.0
         
         if (maxDimension > 0) {
             const scale = targetSize / maxDimension;
             model.scale.setScalar(scale);
+            // Store the base scale for this model
+            this.baseScales[index] = scale;
         }
         
         // Position at ground level
@@ -463,9 +466,9 @@ class SQLViewer {
     }
     
     updateModelScale() {
-        if (this.currentModel) {
-            // Get the base scale from model setup
-            const baseScale = this.currentModel.scale.x;
+        if (this.currentModel && this.baseScales[this.currentIndex]) {
+            // Use the stored base scale instead of current scale
+            const baseScale = this.baseScales[this.currentIndex];
             this.currentModel.scale.setScalar(baseScale * this.modelScale);
         }
     }
