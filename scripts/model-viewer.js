@@ -17,6 +17,8 @@ class ModelViewer {
         this.modelPrefix = script.getAttribute('data-models');
         this.modelCount = parseInt(script.getAttribute('data-count'));
         
+        console.log(`Inicializando ModelViewer: ${this.modelPrefix}, count: ${this.modelCount}`);
+        
         this.init();
         this.setupControls();
         this.startLoadingModels();
@@ -122,11 +124,11 @@ class ModelViewer {
     }
     
     async loadModelsSequentially() {
-        console.log('Iniciando carga secuencial de modelos...');
+        console.log('🔄 Iniciando carga secuencial de modelos...');
         
         // Check if GLTFLoader is available
         if (typeof THREE.GLTFLoader === 'undefined') {
-            console.log('GLTFLoader no disponible, usando solo modelos de respaldo');
+            console.error('❌ GLTFLoader no disponible, usando solo modelos de respaldo');
             this.createAllFallbackModels();
             return;
         }
@@ -134,58 +136,85 @@ class ModelViewer {
         const loader = new THREE.GLTFLoader();
         
         for (let i = 0; i < this.modelCount; i++) {
-            try {
-                const modelPath = `./models/${this.modelPrefix}${i + 1}.glb`;
-                console.log(`Cargando modelo ${i + 1}: ${modelPath}`);
-                
-                const gltf = await this.loadModel(loader, modelPath);
-                
-                // Replace fallback or create new model
-                if (this.models[i] && this.currentIndex === i) {
-                    // Currently showing, need to replace carefully
-                    this.scene.remove(this.models[i]);
+            const modelNumber = i + 1;
+            const modelName = `${this.modelPrefix}${modelNumber}`;
+            
+            // Rutas posibles donde buscar el modelo
+            const possiblePaths = [
+                `./models/${modelName}.glb`,
+                `./assets/${modelName}.glb`,
+                `./${modelName}.glb`,
+                `models/${modelName}.glb`,
+                `assets/${modelName}.glb`,
+                `${modelName}.glb`
+            ];
+            
+            console.log(`🔍 Intentando cargar modelo ${modelNumber}: ${modelName}`);
+            console.log(`📂 Rutas a probar:`, possiblePaths);
+            
+            let modelLoaded = false;
+            
+            for (const modelPath of possiblePaths) {
+                try {
+                    console.log(`📥 Probando ruta: ${modelPath}`);
+                    const gltf = await this.loadModel(loader, modelPath);
+                    
+                    console.log(`✅ ¡Modelo ${modelNumber} cargado desde: ${modelPath}!`);
+                    
+                    // Replace fallback or create new model
+                    if (this.models[i] && this.currentIndex === i) {
+                        // Currently showing, need to replace carefully
+                        this.scene.remove(this.models[i]);
+                    }
+                    
+                    this.models[i] = gltf.scene;
+                    
+                    // Store animations if any
+                    if (gltf.animations && gltf.animations.length > 0) {
+                        this.animations[i] = gltf.animations;
+                        console.log(`🎬 Modelo ${modelNumber} tiene ${gltf.animations.length} animaciones`);
+                    } else {
+                        this.animations[i] = [];
+                        console.log(`📝 Modelo ${modelNumber} sin animaciones`);
+                    }
+                    
+                    // Setup model properties
+                    this.setupModelProperties(this.models[i], i);
+                    
+                    // If this is the current model, show it
+                    if (this.currentIndex === i) {
+                        this.showModel(i);
+                    }
+                    
+                    this.loadedCount++;
+                    modelLoaded = true;
+                    break; // Salir del loop de rutas si se cargó correctamente
+                    
+                } catch (error) {
+                    console.log(`❌ Error con ${modelPath}: ${error.message}`);
+                    continue; // Probar siguiente ruta
                 }
-                
-                this.models[i] = gltf.scene;
-                
-                // Store animations if any
-                if (gltf.animations && gltf.animations.length > 0) {
-                    this.animations[i] = gltf.animations;
-                    console.log(`Modelo ${i + 1} tiene ${gltf.animations.length} animaciones`);
-                } else {
-                    this.animations[i] = [];
-                }
-                
-                // Setup model properties
-                this.setupModelProperties(this.models[i], i);
-                
-                // If this is the current model, show it
-                if (this.currentIndex === i) {
-                    this.showModel(i);
-                }
-                
-                this.loadedCount++;
-                console.log(`Modelo ${i + 1} cargado (${this.loadedCount}/${this.modelCount})`);
-                
-                // Small delay to prevent overwhelming
-                await new Promise(resolve => setTimeout(resolve, 200));
-                
-            } catch (error) {
-                console.log(`Error cargando modelo ${i + 1}, manteniendo fallback:`, error.message);
+            }
+            
+            if (!modelLoaded) {
+                console.log(`⚠️ No se pudo cargar ${modelName} desde ninguna ruta, manteniendo fallback`);
                 
                 // Create fallback if not exists
                 if (!this.models[i]) {
-                    this.models[i] = this.createFallbackModel(i + 1);
+                    this.models[i] = this.createFallbackModel(modelNumber);
                     this.setupModelProperties(this.models[i], i);
                 }
             }
+            
+            // Small delay to prevent overwhelming
+            await new Promise(resolve => setTimeout(resolve, 300));
         }
         
-        console.log(`Carga completada: ${this.loadedCount}/${this.modelCount} modelos reales cargados`);
+        console.log(`✨ Carga completada: ${this.loadedCount}/${this.modelCount} modelos reales cargados`);
     }
     
     createAllFallbackModels() {
-        console.log('Creando todos los modelos de respaldo...');
+        console.log('🎨 Creando todos los modelos de respaldo...');
         
         for (let i = 0; i < this.modelCount; i++) {
             if (!this.models[i]) {
@@ -201,8 +230,10 @@ class ModelViewer {
                 path,
                 (gltf) => resolve(gltf),
                 (progress) => {
-                    const percentage = (progress.loaded / progress.total * 100).toFixed(1);
-                    console.log(`Progreso: ${percentage}%`);
+                    if (progress.total > 0) {
+                        const percentage = (progress.loaded / progress.total * 100).toFixed(1);
+                        console.log(`📊 Progreso ${path}: ${percentage}%`);
+                    }
                 },
                 (error) => reject(error)
             );
@@ -258,7 +289,7 @@ class ModelViewer {
         const wireframe = new THREE.LineSegments(edges, edgeMaterial);
         group.add(wireframe);
         
-        console.log(`Modelo fallback ${index} creado`);
+        console.log(`🎨 Modelo fallback ${index} creado`);
         return group;
     }
     
@@ -305,6 +336,7 @@ class ModelViewer {
         // Stop current animations
         if (this.mixers[this.currentIndex]) {
             this.mixers[this.currentIndex].stopAllAction();
+            this.mixers[this.currentIndex] = null;
         }
         
         // Hide current model
@@ -321,14 +353,14 @@ class ModelViewer {
             this.currentModel.visible = true;
             this.scene.add(this.currentModel);
             
-            // Setup animations if available
+            // Setup animations if available - NO ROTACIÓN MANUAL
             this.setupAnimations(index);
             
             // Update UI
             this.updateUI();
             this.updateControls();
             
-            console.log(`Mostrando modelo ${index + 1}: ${this.modelPrefix}${index + 1}`);
+            console.log(`👁️ Mostrando modelo ${index + 1}: ${this.modelPrefix}${index + 1}`);
         }
     }
     
@@ -342,8 +374,12 @@ class ModelViewer {
                 const action = mixer.clipAction(clip);
                 action.setLoop(THREE.LoopRepeat);
                 action.play();
-                console.log(`Reproduciendo animación ${clipIndex + 1} para modelo ${index + 1}`);
+                console.log(`🎬 Reproduciendo animación ${clipIndex + 1} de ${clip.name || 'Sin nombre'} para modelo ${index + 1}`);
             });
+            
+            console.log(`✨ ${this.animations[index].length} animaciones iniciadas para modelo ${index + 1}`);
+        } else {
+            console.log(`📝 Modelo ${index + 1} sin animaciones para reproducir`);
         }
     }
     
@@ -417,15 +453,12 @@ class ModelViewer {
         
         const delta = this.clock.getDelta();
         
-        // Update animations
+        // Update animations - SOLO LAS ANIMACIONES DEL GLB, NO ROTACIÓN MANUAL
         if (this.mixers[this.currentIndex]) {
             this.mixers[this.currentIndex].update(delta);
         }
         
-        // Rotate current model slowly
-        if (this.currentModel && this.currentModel.visible) {
-            this.currentModel.rotation.y += 0.005;
-        }
+        // NO rotar manualmente el modelo - solo reproducir animaciones programadas
         
         this.renderer.render(this.scene, this.camera);
     }
@@ -447,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             new ModelViewer();
         } catch (error) {
-            console.error('Error inicializando ModelViewer:', error);
+            console.error('💥 Error inicializando ModelViewer:', error);
         }
     }, 100);
 });
