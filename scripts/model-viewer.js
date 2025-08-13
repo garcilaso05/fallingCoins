@@ -17,6 +17,9 @@ class ModelViewer {
         this.modelPrefix = script.getAttribute('data-models');
         this.modelCount = parseInt(script.getAttribute('data-count'));
         
+        // Distancia base de cámara según tipo de modelo
+        this.baseCameraZ = this.modelPrefix === 'SQL' ? 6 : 4;
+        
         console.log(`Inicializando ModelViewer: ${this.modelPrefix}, count: ${this.modelCount}`);
         
         this.init();
@@ -32,8 +35,9 @@ class ModelViewer {
         
         // Create camera - AJUSTAR POSICIÓN PARA MEJOR VISTA
         this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-        this.camera.position.set(0, 1.5, 4); // Subir un poco la cámara
-        this.camera.lookAt(0, 0.5, 0); // Mirar hacia el centro del modelo
+        // Usar distancia configurable
+        this.camera.position.set(0, 1.2, this.baseCameraZ);
+        this.camera.lookAt(0, 0.5, 0);
         
         // Create renderer
         this.renderer = new THREE.WebGLRenderer({ 
@@ -302,38 +306,41 @@ class ModelViewer {
             }
         });
         
-        // Center the model
+        // 1. Centrar el modelo en torno al origen
         const box = new THREE.Box3().setFromObject(model);
         const center = box.getCenter(new THREE.Vector3());
-        model.position.sub(center);
+        model.position.sub(center); // Ahora el centro geométrico queda en (0,0,0)
         
-        // Scale appropriately - ESCALADO BALANCEADO
+        // 2. Calcular tamaño máximo original
         const size = box.getSize(new THREE.Vector3());
-        const maxDimension = Math.max(size.x, size.y, size.z);
+        const maxDimension = Math.max(size.x, size.y, size.z) || 1;
         
-        // Tamaños objetivo balanceados entre sí
-        let targetSize;
-        if (this.modelPrefix === 'M') {
-            targetSize = 2.0; // Mascotas un poco más grandes
-        } else if (this.modelPrefix === 'SQL') {
-            targetSize = 1.8; // Objetos SQL un poco más pequeños
-        } else {
-            targetSize = 1.9; // Por defecto equilibrado
-        }
+        // 3. Calcular dimensiones visibles con la cámara actual
+        const distance = this.camera.position.z; // Aproximación (modelo centrado en z=0)
+        const fovRad = THREE.MathUtils.degToRad(this.camera.fov * 0.5);
+        const visibleHeight = 2 * distance * Math.tan(fovRad);
+        const visibleWidth = visibleHeight * this.camera.aspect;
         
-        // APLICAR ESCALADO FORZADO - siempre escalar
-        const scale = targetSize / maxDimension;
+        // 4. Margen (fill ratio)
+        const fill = 0.85; // 85% del área visible
+        const maxFit = Math.min(visibleHeight, visibleWidth) * fill;
+        
+        // 5. Escala adaptativa
+        const scale = maxFit / maxDimension;
         model.scale.setScalar(scale);
         
-        console.log(`📏 Modelo ${index + 1} (${this.modelPrefix}): Original ${maxDimension.toFixed(2)} → Target ${targetSize} → Escala ${scale.toFixed(3)}`);
+        // 6. Recalcular bounding box tras escalar para apoyar base en y=0
+        const scaledBox = new THREE.Box3().setFromObject(model);
+        const minY = scaledBox.min.y;
+        model.position.y -= minY; // Base a y=0
         
-        // Position centered and at ground level
-        model.position.y = 0; // Al nivel del suelo para evitar ver pies flotando
-        model.position.x = 0;
-        model.position.z = 0;
-        
-        // Initially hide
+        // 7. Guardar oculto inicialmente
         model.visible = false;
+        
+        console.log(
+            `📏 [${this.modelPrefix}] Modelo ${index + 1}: maxDim=${maxDimension.toFixed(3)} ` +
+            `visH=${visibleHeight.toFixed(3)} visW=${visibleWidth.toFixed(3)} scale=${scale.toFixed(3)}`
+        );
     }
     
     showModel(index) {
